@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:whatsapp_clone/utils/my_colors.dart';
+import 'package:whatsapp_clone/widget/from_facebook.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatelessWidget with MyColors {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final double height = MediaQuery.of(context).size.height;
     final Widget upPadding = SizedBox(height: height / 3.1);
-    final Widget downPadding = SizedBox(height: 90);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: MyColors.backgroundColor,
       body: Stack(
         children: [
+          SvgPicture.asset('assets/splash_screen.svg'),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -34,23 +36,7 @@ class SplashScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                Column(
-                  children: [
-                    Text(
-                      'from',
-                      style: GoogleFonts.roboto(color: Color(0XFF867373)),
-                    ),
-                    Text(
-                      'FACEBOOK',
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 15,
-                      ),
-                    ),
-                    downPadding,
-                  ],
-                ),
+                FromFacebook(),
               ],
             ),
           ),
