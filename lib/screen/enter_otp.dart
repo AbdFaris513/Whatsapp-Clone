@@ -1,15 +1,56 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:whatsapp_clone/screen/chats/chat_body.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
 class EnterOtpScreen extends StatelessWidget with MyColors {
-  EnterOtpScreen({super.key});
+  final String verificationId;
+  final String phoneNumber;
+
+  EnterOtpScreen({
+    super.key,
+    required this.verificationId,
+    required this.phoneNumber,
+  });
 
   final TextEditingController _controller = TextEditingController(
     text: "- - - - - -",
   );
+
+  void _verifyOtp(BuildContext context) async {
+    String rawInput = _controller.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (rawInput.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a 6-digit OTP")),
+      );
+      return;
+    }
+
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: rawInput,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Phone number verified!")));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ChatBodyScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("OTP verification failed: $e")));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +84,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                           "Waiting to automatically detect an SMS sent to your number ",
                     ),
                     TextSpan(
-                      text: "+91 98765 43210",
+                      text: phoneNumber,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const TextSpan(text: ". "),
@@ -55,13 +96,12 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                       ),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
-                          print("Wrong number tapped");
+                          Navigator.pop(context);
                         },
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 64),
@@ -88,8 +128,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                   ),
                 ),
               ),
-              SizedBox(height: 40),
-
+              const SizedBox(height: 40),
               Column(
                 children: [
                   Text(
@@ -122,17 +161,17 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                   ),
                 ],
               ),
-              Spacer(),
+              const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: MyColors.greenGroundColor,
                   foregroundColor: MyColors.backgroundColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2), // Rounded corners
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 50),
+                  padding: const EdgeInsets.symmetric(horizontal: 50),
                 ),
-                onPressed: () {},
+                onPressed: () => _verifyOtp(context),
                 child: Text(
                   'Verify',
                   style: GoogleFonts.roboto(fontWeight: FontWeight.w400),

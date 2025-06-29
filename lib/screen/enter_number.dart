@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +20,11 @@ class _EnterNumberState extends State<EnterNumber> {
 
   String selectedValue = 'India';
   final List<String> items = ['India', 'USA', 'Finland'];
+
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _countryCodeController = TextEditingController(
+    text: '+91',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -118,9 +124,7 @@ class _EnterNumberState extends State<EnterNumber> {
                               child: SizedBox(
                                 height: 40,
                                 child: TextField(
-                                  controller: TextEditingController(
-                                    text: '+91',
-                                  ),
+                                  controller: _countryCodeController,
                                   cursorColor: Colors.white,
                                   style: GoogleFonts.roboto(
                                     color: MyColors.foregroundColor,
@@ -155,9 +159,7 @@ class _EnterNumberState extends State<EnterNumber> {
                               child: SizedBox(
                                 height: 40,
                                 child: TextField(
-                                  controller: TextEditingController(
-                                    text: '93443 46569',
-                                  ),
+                                  controller: _phoneNumberController,
                                   cursorColor: Colors.white,
                                   style: GoogleFonts.roboto(
                                     color: MyColors.foregroundColor,
@@ -209,11 +211,47 @@ class _EnterNumberState extends State<EnterNumber> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 50),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EnterOtpScreen()),
-                  );
+                onPressed: () async {
+                  String countryCode = _countryCodeController.text.trim();
+                  String phoneNumber = _phoneNumberController.text.trim();
+                  String fullPhoneNumber = '$countryCode$phoneNumber';
+
+                  if (countryCode.isNotEmpty && phoneNumber.isNotEmpty) {
+                    await FirebaseAuth.instance.verifyPhoneNumber(
+                      phoneNumber: fullPhoneNumber,
+                      verificationCompleted: (PhoneAuthCredential credential) {
+                        // For automatic OTP retrieval
+                        FirebaseAuth.instance.signInWithCredential(credential);
+                      },
+                      verificationFailed: (FirebaseAuthException e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Verification failed: ${e.message}'),
+                          ),
+                        );
+                      },
+                      codeSent: (String verificationId, int? resendToken) {
+                        // Store verificationId for later
+                        print(
+                          'Verification ID: $verificationId, Phone: $fullPhoneNumber',
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EnterOtpScreen(
+                              verificationId: verificationId,
+                              phoneNumber: fullPhoneNumber,
+                            ),
+                          ),
+                        );
+                      },
+                      codeAutoRetrievalTimeout: (String verificationId) {},
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter both fields')),
+                    );
+                  }
                 },
                 child: Text(
                   'NEXT',

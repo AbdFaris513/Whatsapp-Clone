@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:whatsapp_clone/screen/enter_number.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/from_facebook.dart';
 
@@ -80,7 +81,12 @@ class FirstScreen extends StatelessWidget with MyColors {
                       ),
                       padding: EdgeInsets.symmetric(horizontal: 50),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => EnterNumber()),
+                      );
+                    },
                     child: Text(
                       'AGREE AND CONTINUE',
                       style: GoogleFonts.roboto(fontWeight: FontWeight.w400),
