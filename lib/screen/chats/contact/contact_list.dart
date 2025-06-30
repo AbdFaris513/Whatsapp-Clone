@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:whatsapp_clone/controller/contact_controller.dart';
+import 'package:whatsapp_clone/model/contact_model.dart';
 import 'package:whatsapp_clone/screen/chats/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/search.dart';
 
 class ContactListScreen extends StatelessWidget {
-  const ContactListScreen({super.key});
+  ContactListScreen({super.key});
+
+  final ContactController contactController = Get.put(ContactController());
 
   @override
   Widget build(BuildContext context) {
@@ -30,14 +35,18 @@ class ContactListScreen extends StatelessWidget {
           Expanded(
             child: Stack(
               children: [
-                ListView.builder(
-                  itemCount: 4,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ContactDetailsContainer(),
-                    );
-                  },
+                Obx(
+                  () => ListView.builder(
+                    itemCount: contactController.contactData.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ContactDetailsContainer(
+                          contactData: contactController.contactData[index],
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 Positioned(
                   bottom: 0,
@@ -76,7 +85,8 @@ class ContactListScreen extends StatelessWidget {
 }
 
 class ContactDetailsContainer extends StatelessWidget with MyColors {
-  const ContactDetailsContainer({super.key});
+  final ContactData contactData;
+  ContactDetailsContainer({super.key, required this.contactData});
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +99,13 @@ class ContactDetailsContainer extends StatelessWidget with MyColors {
             children: [
               ClipRRect(
                 borderRadius: BorderRadiusGeometry.circular(50),
-                child: Image.asset("assets/no_dp.jpeg", height: 45, width: 45),
+                child: Image.asset(
+                  contactData.contactImage == null
+                      ? "assets/no_dp.jpeg"
+                      : contactData.contactImage!,
+                  height: 45,
+                  width: 45,
+                ),
               ),
               SizedBox(width: 6),
               Column(
@@ -97,15 +113,15 @@ class ContactDetailsContainer extends StatelessWidget with MyColors {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Faris',
+                    contactData.contactFirstName,
                     style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 18,
                       color: MyColors.foregroundColor,
                     ),
                   ),
                   Text(
-                    'A Sparrow Become an Egale',
+                    contactData.contactStatus ?? '',
                     style: GoogleFonts.roboto(
                       fontSize: 14,
                       color: MyColors.searchHintTextColor,
