@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:whatsapp_clone/screen/chats/chat_body.dart';
+import 'package:whatsapp_clone/screen/profile_info.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
 class EnterOtpScreen extends StatelessWidget with MyColors {
@@ -43,7 +43,9 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
       ).showSnackBar(const SnackBar(content: Text("Phone number verified!")));
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ChatBodyScreen()),
+        MaterialPageRoute(
+          builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(
