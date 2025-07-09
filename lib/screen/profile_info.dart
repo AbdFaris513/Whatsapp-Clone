@@ -22,6 +22,7 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
           'name': name,
           'phone': phoneNumber,
           'createdAt': FieldValue.serverTimestamp(),
+          'suma': 'ds',
         });
       } catch (e) {
         debugPrint('Error on $e');
