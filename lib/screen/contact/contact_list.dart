@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
-import 'package:whatsapp_clone/screen/chats/contact/add_contact.dart';
+import 'package:whatsapp_clone/screen/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/search.dart';
 

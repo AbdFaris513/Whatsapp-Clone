@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
 import 'package:whatsapp_clone/screen/chats/chat_menus_list.dart';
-import 'package:whatsapp_clone/screen/chats/contact/contact_list.dart';
+import 'package:whatsapp_clone/screen/contact/contact_list.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
 // ignore: must_be_immutable

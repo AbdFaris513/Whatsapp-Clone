@@ -1,8 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:whatsapp_clone/screen/chats/chat_body.dart';
 import 'package:whatsapp_clone/screen/profile_info.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
@@ -20,6 +21,35 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
     text: "- - - - - -",
   );
 
+  void showTopSnackBarWithOTP(BuildContext context) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).viewPadding.top + 16,
+        left: 16,
+        right: 16,
+        child: Material(
+          elevation: 10,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.green[700],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              'Your OTP is: $verificationId',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(Duration(seconds: 3)).then((_) => overlayEntry.remove());
+  }
+
   void _verifyOtp(BuildContext context) async {
     String rawInput = _controller.text.replaceAll(RegExp(r'[^0-9]'), '');
 
@@ -30,28 +60,68 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
       return;
     }
 
-    try {
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: verificationId,
-        smsCode: rawInput,
+    if (rawInput == verificationId) {
+      final CollectionReference users = FirebaseFirestore.instance.collection(
+        'users',
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final doc = await users.doc(phoneNumber).get();
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Phone number verified!")));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("OTP verification failed: $e")));
+      if (!doc.exists) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber),
+          ),
+        );
+      } else {
+        print('Phone number already registered');
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(phoneNumber)
+            .get();
+
+        if (userDoc.exists) {
+          List<dynamic> contactList = userDoc.get('contactList');
+
+          for (var contact in contactList) {
+            String phone = contact['phoneNumber'];
+            String name = contact['contactName'];
+
+            print('Contact: $name - $phone');
+          }
+        } else {
+          print('User not found');
+        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ChatBodyScreen()),
+        );
+      }
     }
+
+    // try {
+    //   PhoneAuthCredential credential = PhoneAuthProvider.credential(
+    //     verificationId: verificationId,
+    //     smsCode: rawInput,
+    //   );
+
+    //   await FirebaseAuth.instance.signInWithCredential(credential);
+
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(const SnackBar(content: Text("Phone number verified!")));
+    //   Navigator.pushReplacement(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber),
+    //     ),
+    //   );
+    // } catch (e) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text("OTP verification failed: $e")));
+    // }
   }
 
   @override
@@ -145,7 +215,9 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
-                        onPressed: () => print("Resend SMS tapped"),
+                        onPressed: () {
+                          showTopSnackBarWithOTP(context);
+                        },
                         child: const Text(
                           "Resend SMS",
                           style: TextStyle(color: Colors.blue),

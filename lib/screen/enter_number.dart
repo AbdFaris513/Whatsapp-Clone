@@ -1,6 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/screen/enter_otp.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -25,6 +27,39 @@ class _EnterNumberState extends State<EnterNumber> {
   final TextEditingController _countryCodeController = TextEditingController(
     text: '+91',
   );
+
+  String showTopSnackBarWithOTP(BuildContext context) {
+    final overlay = Overlay.of(context);
+    final random = Random();
+    final otp = (100000 + random.nextInt(999999)).toString(); // 4-digit number
+
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).viewPadding.top + 16,
+        left: 16,
+        right: 16,
+        child: Material(
+          elevation: 10,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.green[700],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              'Your OTP is: $otp',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(Duration(seconds: 3)).then((_) => overlayEntry.remove());
+    return otp;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +196,13 @@ class _EnterNumberState extends State<EnterNumber> {
                                 child: TextField(
                                   controller: _phoneNumberController,
                                   cursorColor: Colors.white,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(
+                                      10,
+                                    ), // Optional: limit to 10 digits
+                                  ],
                                   style: GoogleFonts.roboto(
                                     color: MyColors.foregroundColor,
                                     fontSize: 18,
@@ -212,46 +254,57 @@ class _EnterNumberState extends State<EnterNumber> {
                   padding: EdgeInsets.symmetric(horizontal: 50),
                 ),
                 onPressed: () async {
+                  String otp = showTopSnackBarWithOTP(context);
                   String countryCode = _countryCodeController.text.trim();
                   String phoneNumber = _phoneNumberController.text.trim();
                   String fullPhoneNumber = '$countryCode$phoneNumber';
 
-                  if (countryCode.isNotEmpty && phoneNumber.isNotEmpty) {
-                    await FirebaseAuth.instance.verifyPhoneNumber(
-                      phoneNumber: fullPhoneNumber,
-                      verificationCompleted: (PhoneAuthCredential credential) {
-                        // For automatic OTP retrieval
-                        FirebaseAuth.instance.signInWithCredential(credential);
-                      },
-                      verificationFailed: (FirebaseAuthException e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Verification failed: ${e.message}'),
-                          ),
-                        );
-                      },
-                      codeSent: (String verificationId, int? resendToken) {
-                        // Store verificationId for later
-                        print(
-                          'Verification ID: $verificationId, Phone: $fullPhoneNumber',
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EnterOtpScreen(
-                              verificationId: verificationId,
-                              phoneNumber: fullPhoneNumber,
-                            ),
-                          ),
-                        );
-                      },
-                      codeAutoRetrievalTimeout: (String verificationId) {},
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter both fields')),
-                    );
-                  }
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EnterOtpScreen(
+                        verificationId: otp,
+                        phoneNumber: fullPhoneNumber,
+                      ),
+                    ),
+                  );
+
+                  // if (countryCode.isNotEmpty && phoneNumber.isNotEmpty) {
+                  //   await FirebaseAuth.instance.verifyPhoneNumber(
+                  //     phoneNumber: fullPhoneNumber,
+                  //     verificationCompleted: (PhoneAuthCredential credential) {
+                  //       // For automatic OTP retrieval
+                  //       FirebaseAuth.instance.signInWithCredential(credential);
+                  //     },
+                  //     verificationFailed: (FirebaseAuthException e) {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         SnackBar(
+                  //           content: Text('Verification failed: ${e.message}'),
+                  //         ),
+                  //       );
+                  //     },
+                  //     codeSent: (String verificationId, int? resendToken) {
+                  //       // Store verificationId for later
+                  //       print(
+                  //         'Verification ID: $verificationId, Phone: $fullPhoneNumber',
+                  //       );
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //           builder: (context) => EnterOtpScreen(
+                  //             verificationId: verificationId,
+                  //             phoneNumber: fullPhoneNumber,
+                  //           ),
+                  //         ),
+                  //       );
+                  //     },
+                  //     codeAutoRetrievalTimeout: (String verificationId) {},
+                  //   );
+                  // } else {
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     const SnackBar(content: Text('Please enter both fields')),
+                  //   );
+                  // }
                 },
                 child: Text(
                   'NEXT',

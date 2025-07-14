@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -43,6 +45,24 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
       borderSide: const BorderSide(color: Colors.red, width: 2),
     ),
   );
+
+  Future<void> addSingleContact({
+    required String userId,
+    required String phoneNumber,
+    required String contactName,
+  }) async {
+    final userDocRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId);
+
+    await userDocRef.update({
+      'contactList': FieldValue.arrayUnion([
+        {'phoneNumber': phoneNumber, 'contactName': contactName},
+      ]),
+    });
+
+    print('Contact added successfully!');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +222,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 setState(() {
                   firstNameError = _firstNameController.text.isEmpty
                       ? 'First name is required'
@@ -213,7 +233,17 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                 });
 
                 if (firstNameError != null || phoneNumberError != null) return;
-
+                final prefs = await SharedPreferences.getInstance();
+                String userId = '';
+                if (prefs.containsKey('loggedInPhone')) {
+                  userId = prefs.getString('loggedInPhone') ?? '';
+                  print('Logged in phone: $userId');
+                }
+                await addSingleContact(
+                  userId: userId,
+                  phoneNumber: _phoneNumberController.text,
+                  contactName: _firstNameController.text,
+                );
                 contactController.addContact(
                   ContactData(
                     contactFirstName: _firstNameController.text.trim(),

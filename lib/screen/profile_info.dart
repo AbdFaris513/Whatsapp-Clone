@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:whatsapp_clone/screen/chats/chat_body.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
 class ProfileInfoScreen extends StatelessWidget with MyColors {
@@ -14,15 +16,26 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
 
     if (name.isNotEmpty) {
       try {
-        print('Name : $name = Number : $phoneNumber');
         CollectionReference users = FirebaseFirestore.instance.collection(
           'users',
         );
-        await users.add({
+        await users.doc(phoneNumber).set({
           'name': name,
           'phone': phoneNumber,
           'createdAt': FieldValue.serverTimestamp(),
+          'profilePicture': '',
+          'lastSeen': '',
+          'isOnline': true,
+          'about': '',
+          'contactList': [],
         });
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('loggedInPhone', phoneNumber);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ChatBodyScreen()),
+        );
       } catch (e) {
         debugPrint('Error on $e');
       }

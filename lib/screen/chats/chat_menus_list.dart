@@ -1,25 +1,40 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:whatsapp_clone/controller/chat_body_controller.dart';
+import 'package:whatsapp_clone/screen/chats/empty_chat_screen.dart';
+import 'package:whatsapp_clone/screen/first_screen.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/search.dart';
 
 class ChatMenusList extends StatelessWidget {
-  const ChatMenusList({super.key});
+  ChatMenusList({super.key});
+  final ChatBodyController chatBodyController = Get.put(ChatBodyController());
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ChartMenuAppBar(),
-        SizedBox(height: 12),
-        ChartMenuSearchBar(),
-        SizedBox(height: 12),
-        ChartMenuCategories(
-          categoriesList: ['All', 'Unread', 'Favourites', 'Groups'],
-        ),
-        SizedBox(height: 12),
-      ],
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ChartMenuAppBar(),
+          SizedBox(height: 12),
+
+          if (chatBodyController.chatList.isNotEmpty) ...[
+            ChartMenuSearchBar(),
+            SizedBox(height: 12),
+            ChartMenuCategories(
+              categoriesList: ['All', 'Unread', 'Favourites', 'Groups'],
+            ),
+            SizedBox(height: 12),
+          ] else ...[
+            EmptyChatScreen(),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -102,7 +117,26 @@ class ChartMenuAppBar extends StatelessWidget with MyColors {
           children: [
             SvgPicture.asset("assets/camera.svg", width: 25, height: 25),
             SizedBox(width: 6),
-            CircleAvatar(radius: 14, child: Icon(Icons.add)),
+            InkWell(
+              onTap: () async {
+                try {
+                  await FirebaseAuth.instance.signOut();
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('loggedInPhone');
+
+                  // Optional: Navigate to login screen
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => FirstScreen()),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logout failed: ${e.toString()}')),
+                  );
+                }
+              },
+              child: CircleAvatar(radius: 14, child: Icon(Icons.add)),
+            ),
           ],
         ),
       ],
