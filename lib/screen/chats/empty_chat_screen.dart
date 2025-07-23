@@ -60,18 +60,11 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
           const SizedBox(height: 24),
           if (!hasContacts) ...[
             // You can replace this with an illustration too
-            Icon(
-              Icons.contact_page_outlined,
-              size: 80,
-              color: Colors.grey.shade400,
-            ),
+            Icon(Icons.contact_page_outlined, size: 80, color: Colors.grey.shade400),
             const SizedBox(height: 16),
             Text(
               'Tap below to add your first contact 👇',
-              style: GoogleFonts.roboto(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
+              style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -79,35 +72,35 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
           if (hasContacts) ...[
             SizedBox(
               height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 6, // change to contactController.contactData.length
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: SizedBox(
-                      width: 70,
-                      child: Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(50),
-                            child: Image.asset(
-                              "assets/no_dp.jpeg",
-                              height: 60,
-                              width: 60,
+              child: Obx(
+                () => ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: contactController
+                      .contactData
+                      .length, // change to contactController.contactData.length
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: SizedBox(
+                        width: 70,
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(50),
+                              child: Image.asset("assets/no_dp.jpeg", height: 60, width: 60),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Kabir Singh',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            Text(
+                              contactController.contactData[index].contactFirstName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 10),

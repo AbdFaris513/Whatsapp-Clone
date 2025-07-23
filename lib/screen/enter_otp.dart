@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/screen/chats/chat_body.dart';
 import 'package:whatsapp_clone/screen/profile_info.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -11,15 +12,9 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
   final String verificationId;
   final String phoneNumber;
 
-  EnterOtpScreen({
-    super.key,
-    required this.verificationId,
-    required this.phoneNumber,
-  });
+  EnterOtpScreen({super.key, required this.verificationId, required this.phoneNumber});
 
-  final TextEditingController _controller = TextEditingController(
-    text: "- - - - - -",
-  );
+  final TextEditingController _controller = TextEditingController(text: "- - - - - -");
 
   void showTopSnackBarWithOTP(BuildContext context) {
     final overlay = Overlay.of(context);
@@ -54,45 +49,27 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
     String rawInput = _controller.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (rawInput.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a 6-digit OTP")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please enter a 6-digit OTP")));
       return;
     }
 
     if (rawInput == verificationId) {
-      final CollectionReference users = FirebaseFirestore.instance.collection(
-        'users',
-      );
+      final CollectionReference users = FirebaseFirestore.instance.collection('users');
 
       final doc = await users.doc(phoneNumber).get();
 
       if (!doc.exists) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber),
-          ),
+          MaterialPageRoute(builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber)),
         );
       } else {
-        print('Phone number already registered');
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(phoneNumber)
-            .get();
+        debugPrint('Phone number already registered');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('loggedInPhone', phoneNumber);
 
-        if (userDoc.exists) {
-          List<dynamic> contactList = userDoc.get('contactList');
-
-          for (var contact in contactList) {
-            String phone = contact['phoneNumber'];
-            String name = contact['contactName'];
-
-            print('Contact: $name - $phone');
-          }
-        } else {
-          print('User not found');
-        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => ChatBodyScreen()),
@@ -146,14 +123,10 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: GoogleFonts.roboto(
-                    fontSize: 14.3,
-                    color: MyColors.foregroundColor,
-                  ),
+                  style: GoogleFonts.roboto(fontSize: 14.3, color: MyColors.foregroundColor),
                   children: [
                     const TextSpan(
-                      text:
-                          "Waiting to automatically detect an SMS sent to your number ",
+                      text: "Waiting to automatically detect an SMS sent to your number ",
                     ),
                     TextSpan(
                       text: phoneNumber,
@@ -162,10 +135,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                     const TextSpan(text: ". "),
                     TextSpan(
                       text: "Wrong number?",
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
                           Navigator.pop(context);
@@ -189,13 +159,9 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                   ),
                   decoration: const InputDecoration(
                     border: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: MyColors.backgroundColorShade,
-                      ),
+                      borderSide: BorderSide(color: MyColors.backgroundColorShade),
                     ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey),
-                    ),
+                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
                     counterText: "",
                   ),
                 ),
@@ -205,10 +171,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                 children: [
                   Text(
                     "Didn't receive the code?",
-                    style: GoogleFonts.roboto(
-                      fontSize: 14,
-                      color: MyColors.foregroundColor,
-                    ),
+                    style: GoogleFonts.roboto(fontSize: 14, color: MyColors.foregroundColor),
                   ),
                   const SizedBox(height: 1),
                   Row(
@@ -218,18 +181,12 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                         onPressed: () {
                           showTopSnackBarWithOTP(context);
                         },
-                        child: const Text(
-                          "Resend SMS",
-                          style: TextStyle(color: Colors.blue),
-                        ),
+                        child: const Text("Resend SMS", style: TextStyle(color: Colors.blue)),
                       ),
                       const SizedBox(width: 10),
                       TextButton(
                         onPressed: () => print("Call Me tapped"),
-                        child: const Text(
-                          "Call Me",
-                          style: TextStyle(color: Colors.blue),
-                        ),
+                        child: const Text("Call Me", style: TextStyle(color: Colors.blue)),
                       ),
                     ],
                   ),
@@ -240,16 +197,11 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: MyColors.greenGroundColor,
                   foregroundColor: MyColors.backgroundColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
                   padding: const EdgeInsets.symmetric(horizontal: 50),
                 ),
                 onPressed: () => _verifyOtp(context),
-                child: Text(
-                  'Verify',
-                  style: GoogleFonts.roboto(fontWeight: FontWeight.w400),
-                ),
+                child: Text('Verify', style: GoogleFonts.roboto(fontWeight: FontWeight.w400)),
               ),
               const SizedBox(height: 30),
             ],
@@ -279,10 +231,7 @@ class OtpInputFormatter extends TextInputFormatter {
   }
 
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     // Remove all non-digit characters
     final oldDigits = oldValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     final newDigitsRaw = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
@@ -290,8 +239,7 @@ class OtpInputFormatter extends TextInputFormatter {
     String newDigits = newDigitsRaw;
 
     // Detect backspace
-    final isDeleting =
-        newValue.selection.baseOffset < oldValue.selection.baseOffset;
+    final isDeleting = newValue.selection.baseOffset < oldValue.selection.baseOffset;
 
     if (isDeleting && oldDigits.isNotEmpty) {
       newDigits = oldDigits.substring(0, oldDigits.length - 1);
