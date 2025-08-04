@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -46,24 +44,6 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
     ),
   );
 
-  Future<void> addSingleContact({
-    required String userId,
-    required String phoneNumber,
-    required String contactName,
-  }) async {
-    final userDocRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId);
-
-    await userDocRef.update({
-      'contactList': FieldValue.arrayUnion([
-        {'phoneNumber': phoneNumber, 'contactName': contactName},
-      ]),
-    });
-
-    print('Contact added successfully!');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -78,11 +58,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
         children: [
           const Text(
             'New contact',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 16),
 
@@ -134,9 +110,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                 child: TextField(
                   controller: _businessNameController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: baseDecoration.copyWith(
-                    labelText: 'Business name',
-                  ),
+                  decoration: baseDecoration.copyWith(labelText: 'Business name'),
                 ),
               ),
             ],
@@ -163,15 +137,9 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                           style: const TextStyle(color: Colors.white),
                           value: '+91',
                           items: const [
-                            DropdownMenuItem(
-                              value: '+91',
-                              child: Text('IN +91'),
-                            ),
+                            DropdownMenuItem(value: '+91', child: Text('IN +91')),
                             DropdownMenuItem(value: '+1', child: Text('US +1')),
-                            DropdownMenuItem(
-                              value: '+44',
-                              child: Text('UK +44'),
-                            ),
+                            DropdownMenuItem(value: '+44', child: Text('UK +44')),
                           ],
                           onChanged: (val) {},
                         ),
@@ -200,12 +168,8 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
             Row(
               children: [
                 Icon(
-                  thisPersonNotHaveAcount == true
-                      ? Icons.cloud_done
-                      : Icons.cloud_off,
-                  color: thisPersonNotHaveAcount == true
-                      ? Colors.green
-                      : Colors.red,
+                  thisPersonNotHaveAcount == true ? Icons.cloud_done : Icons.cloud_off,
+                  color: thisPersonNotHaveAcount == true ? Colors.green : Colors.red,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -233,17 +197,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                 });
 
                 if (firstNameError != null || phoneNumberError != null) return;
-                final prefs = await SharedPreferences.getInstance();
-                String userId = '';
-                if (prefs.containsKey('loggedInPhone')) {
-                  userId = prefs.getString('loggedInPhone') ?? '';
-                  print('Logged in phone: $userId');
-                }
-                await addSingleContact(
-                  userId: userId,
-                  phoneNumber: _phoneNumberController.text,
-                  contactName: _firstNameController.text,
-                );
+
                 contactController.addContact(
                   ContactData(
                     contactFirstName: _firstNameController.text.trim(),
@@ -251,21 +205,17 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                     contactBusinessName: _businessNameController.text.trim(),
                     contactNumber: _phoneNumberController.text.trim(),
                   ),
+                  context,
                 );
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               ),
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'Save',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
+                child: Text('Save', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
           ),

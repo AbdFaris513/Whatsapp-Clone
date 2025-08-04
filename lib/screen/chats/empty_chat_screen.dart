@@ -48,7 +48,7 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
           const SizedBox(height: 10),
           Text(
             hasContacts
-                ? 'Chat with your 6 WhatsApp contacts or create a new contact.'
+                ? 'Chat with your ${contactController.contactData.length} WhatsApp contacts or create a new contact.'
                 : 'No contacts yet?\nStart fresh by adding a new one!',
             style: GoogleFonts.roboto(
               color: MyColors.foregroundColor,
