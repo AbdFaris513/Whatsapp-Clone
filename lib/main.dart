@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:whatsapp_clone/firebase_options.dart';
 import 'package:whatsapp_clone/screen/splash_screen.dart';
 
@@ -14,15 +15,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'WhatsApp Clone',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.teal,
-          secondary: Colors.tealAccent,
-        ),
+        colorScheme: const ColorScheme.dark(primary: Colors.teal, secondary: Colors.tealAccent),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF1F1F1F),
           foregroundColor: Colors.white,
@@ -33,7 +31,7 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white70),
         ),
       ),
-      home: const SplashScreen(), // ChatBodyScreen()
+      home: const SplashScreen(), // ChatBodyScreen() //  ChatsScreen(),
     );
   }
 }

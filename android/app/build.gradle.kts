@@ -7,16 +7,16 @@ plugins {
 
 android {
     namespace = "com.example.whatsapp_clone"
-    compileSdk = 35 // or use flutter.compileSdkVersion if defined elsewhere
+    compileSdk = 36 // or use flutter.compileSdkVersion if you want Flutter to manage
 
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.example.whatsapp_clone"
-        minSdk = 23
-        targetSdk = 34 // or flutter.targetSdkVersion if defined
-        versionCode = 1 // or flutter.versionCode if managed by Flutter
-        versionName = "1.0.0" // or flutter.versionName
+        minSdk = flutter.minSdkVersion  // ✅ fixed
+        targetSdk = 36                  // or flutter.targetSdkVersion
+        versionCode = 1                 // or flutter.versionCode
+        versionName = "1.0.0"           // or flutter.versionName
     }
 
     compileOptions {
@@ -29,19 +29,18 @@ android {
     }
 
     buildTypes {
-    release {
-        signingConfig = signingConfigs.getByName("debug")
+        release {
+            signingConfig = signingConfigs.getByName("debug")
 
-        isMinifyEnabled = true // <- Required for shrinkResources
-        isShrinkResources = true
+            isMinifyEnabled = true   // ✅ Kotlin DSL property
+            isShrinkResources = true // ✅ Kotlin DSL property
 
-        proguardFiles(
-            getDefaultProguardFile("proguard-android-optimize.txt"),
-            "proguard-rules.pro"
-        )
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
-}
-
 }
 
 flutter {

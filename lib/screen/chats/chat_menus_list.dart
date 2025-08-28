@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
+import 'package:whatsapp_clone/model/contact_model.dart';
+import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
 import 'package:whatsapp_clone/screen/chats/empty_chat_screen.dart';
 import 'package:whatsapp_clone/screen/first_screen.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -18,22 +20,149 @@ class ChatMenusList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           ChartMenuAppBar(),
           SizedBox(height: 12),
 
-          if (chatBodyController.chatList.isNotEmpty) ...[
+          if (false
+          // chatBodyController.chatList.isNotEmpty
+          ) ...[
             ChartMenuSearchBar(),
             SizedBox(height: 12),
-            ChartMenuCategories(
-              categoriesList: ['All', 'Unread', 'Favourites', 'Groups'],
-            ),
+            ChartMenuCategories(categoriesList: ['All', 'Unread', 'Favourites', 'Groups']),
             SizedBox(height: 12),
+            ChatsDetailsContainer(
+              contactData: ContactData(
+                id: '',
+                contactNumber: 'Abd',
+                contactFirstName: 'Abd',
+                contactLastMsg: 'Assalamu Alaikum',
+                contactLastMsgTime: DateTime.now(),
+                unreadMessages: 2,
+              ),
+            ),
+            ChatsDetailsContainer(
+              contactData: ContactData(
+                id: '',
+                contactNumber: 'Munir',
+                contactFirstName: 'Munir',
+                contactLastMsg: 'Wa Alaikum Assalam',
+                contactLastMsgTime: DateTime.now(),
+                unreadMessages: 0,
+              ),
+            ),
           ] else ...[
             EmptyChatScreen(),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class ChatsDetailsContainer extends StatefulWidget with MyColors {
+  final ContactData contactData;
+
+  ChatsDetailsContainer({super.key, required this.contactData});
+
+  @override
+  State<ChatsDetailsContainer> createState() => _ChatsDetailsContainerState();
+}
+
+class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
+  final ChatBodyController chatBodyController = Get.put(ChatBodyController());
+
+  late final String? userID;
+
+  @override
+  void initState() {
+    getAwaitFunctions();
+    super.initState();
+  }
+
+  Future<void> getAwaitFunctions() async {
+    userID = await chatBodyController.getUserPhoneNumber();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Get.to(() => ChatsScreen(userID: userID));
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        margin: EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadiusGeometry.circular(50),
+                  child: Image.asset(
+                    widget.contactData.contactImage == null
+                        ? "assets/no_dp.jpeg"
+                        : widget.contactData.contactImage!,
+                    height: 45,
+                    width: 45,
+                  ),
+                ),
+                SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.contactData.contactFirstName,
+                      style: GoogleFonts.roboto(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        color: MyColors.foregroundColor,
+                      ),
+                    ),
+                    Text(
+                      widget.contactData.contactLastMsg ?? '',
+                      style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  chatBodyController.formatLastInteraction(widget.contactData.contactLastMsgTime),
+                  style: GoogleFonts.roboto(
+                    fontSize: 11,
+                    color: (widget.contactData.unreadMessages) > 0
+                        ? MyColors.massageNotificationColor
+                        : MyColors.searchHintTextColor,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: CircleAvatar(
+                    radius: 10,
+                    backgroundColor: widget.contactData.unreadMessages > 0
+                        ? MyColors.massageNotificationColor
+                        : Colors.transparent,
+                    foregroundColor: widget.contactData.unreadMessages > 0
+                        ? MyColors.backgroundColor
+                        : Colors.transparent,
+                    child: Text(
+                      widget.contactData.unreadMessages.toString(),
+                      style: GoogleFonts.roboto(fontSize: 11, color: MyColors.backgroundColor),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -47,8 +176,7 @@ class ChartMenuCategories extends StatefulWidget with MyColors {
   State<ChartMenuCategories> createState() => _ChartMenuCategoriesState();
 }
 
-class _ChartMenuCategoriesState extends State<ChartMenuCategories>
-    with MyColors {
+class _ChartMenuCategoriesState extends State<ChartMenuCategories> with MyColors {
   int selectedIndex = 0;
 
   @override
@@ -74,9 +202,7 @@ class _ChartMenuCategoriesState extends State<ChartMenuCategories>
                     ? MyColors.cetagorySelectedContainerBackgroundColor
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: MyColors.cetagoryContainerBorderColor,
-                ),
+                border: Border.all(color: MyColors.cetagoryContainerBorderColor),
               ),
               child: Center(
                 child: Text(
@@ -130,9 +256,9 @@ class ChartMenuAppBar extends StatelessWidget with MyColors {
                     MaterialPageRoute(builder: (context) => FirstScreen()),
                   );
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Logout failed: ${e.toString()}')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Logout failed: ${e.toString()}')));
                 }
               },
               child: CircleAvatar(radius: 14, child: Icon(Icons.add)),
@@ -140,6 +266,66 @@ class ChartMenuAppBar extends StatelessWidget with MyColors {
           ],
         ),
       ],
+    );
+  }
+}
+
+class ContactDetailsContainer extends StatelessWidget with MyColors {
+  final ContactData contactData;
+  ContactDetailsContainer({super.key, required this.contactData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadiusGeometry.circular(50),
+                child: Image.asset(
+                  contactData.contactImage == null
+                      ? "assets/no_dp.jpeg"
+                      : contactData.contactImage!,
+                  height: 45,
+                  width: 45,
+                ),
+              ),
+              SizedBox(width: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    contactData.contactFirstName,
+                    style: GoogleFonts.roboto(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      color: MyColors.foregroundColor,
+                    ),
+                  ),
+                  Text(
+                    contactData.contactStatus ?? '',
+                    style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Mobile',
+                style: GoogleFonts.roboto(fontSize: 11, color: MyColors.searchHintTextColor),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

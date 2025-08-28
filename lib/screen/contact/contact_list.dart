@@ -56,9 +56,7 @@ class ContactListScreen extends StatelessWidget {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                       ),
                       builder: (context) => ContactPopup(),
                     ),
@@ -122,10 +120,7 @@ class ContactDetailsContainer extends StatelessWidget with MyColors {
                   ),
                   Text(
                     contactData.contactStatus ?? '',
-                    style: GoogleFonts.roboto(
-                      fontSize: 14,
-                      color: MyColors.searchHintTextColor,
-                    ),
+                    style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
                   ),
                 ],
               ),
@@ -137,10 +132,7 @@ class ContactDetailsContainer extends StatelessWidget with MyColors {
             children: [
               Text(
                 'Mobile',
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  color: MyColors.searchHintTextColor,
-                ),
+                style: GoogleFonts.roboto(fontSize: 11, color: MyColors.searchHintTextColor),
               ),
             ],
           ),

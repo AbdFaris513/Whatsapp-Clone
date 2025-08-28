@@ -165,6 +165,7 @@ class ContactController extends GetxController {
         for (var contact in contacts) {
           contactData.add(
             ContactData(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
               contactFirstName: contact['contactName'],
               contactNumber: contact['phoneNumber'],
             ),

@@ -19,15 +19,16 @@ class ChatBodyScreen extends StatefulWidget {
 class _ChatBodyScreenState extends State<ChatBodyScreen> {
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
   final ContactController contactController = Get.put(ContactController());
+  String? phoneNumber;
 
   Future<void> getPhoneNumber() async {
     final prefs = await SharedPreferences.getInstance();
-    String? phoneNumber = prefs.getString('loggedInPhone');
+    phoneNumber = prefs.getString('loggedInPhone');
 
-    if (phoneNumber != null && phoneNumber.isNotEmpty) {
+    if (phoneNumber != null && phoneNumber!.isNotEmpty) {
       debugPrint('Logged-in phone number: $phoneNumber');
       // Call the function after getting the phone number
-      await contactController.getUserContactList(phoneNumber);
+      await contactController.getUserContactList(phoneNumber!);
     } else {
       debugPrint('No phone number saved.');
     }

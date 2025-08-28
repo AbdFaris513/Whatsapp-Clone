@@ -200,6 +200,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
 
                 contactController.addContact(
                   ContactData(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
                     contactFirstName: _firstNameController.text.trim(),
                     contactSecondName: _secoundNameController.text.trim(),
                     contactBusinessName: _businessNameController.text.trim(),

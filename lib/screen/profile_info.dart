@@ -1,50 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:whatsapp_clone/screen/chats/chat_body.dart';
+import 'package:whatsapp_clone/controller/chat_body_controller.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
 class ProfileInfoScreen extends StatelessWidget with MyColors {
   String phoneNumber;
   ProfileInfoScreen({super.key, required this.phoneNumber});
 
+  final ChatBodyController chatBodyController = ChatBodyController();
   final TextEditingController _nameController = TextEditingController();
-
-  void addUser(BuildContext context) async {
-    String name = _nameController.text.trim();
-
-    if (name.isNotEmpty) {
-      try {
-        CollectionReference users = FirebaseFirestore.instance.collection(
-          'users',
-        );
-        await users.doc(phoneNumber).set({
-          'name': name,
-          'phone': phoneNumber,
-          'createdAt': FieldValue.serverTimestamp(),
-          'profilePicture': '',
-          'lastSeen': '',
-          'isOnline': true,
-          'about': '',
-          'contactList': [],
-        });
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('loggedInPhone', phoneNumber);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ChatBodyScreen()),
-        );
-      } catch (e) {
-        debugPrint('Error on $e');
-      }
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter name')));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,21 +32,14 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 42.0,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 42.0, vertical: 6),
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: TextStyle(
-                          color: MyColors.foregroundColor,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: MyColors.foregroundColor, fontSize: 14),
                         children: [
                           const TextSpan(
-                            text:
-                                'Please Provide Your Name and an optional profile photo',
+                            text: 'Please Provide Your Name and an optional profile photo',
                           ),
                         ],
                       ),
@@ -93,11 +50,7 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadiusGeometry.circular(100),
-                        child: Image.asset(
-                          "assets/no_dp.jpeg",
-                          width: 120,
-                          height: 120,
-                        ),
+                        child: Image.asset("assets/no_dp.jpeg", width: 120, height: 120),
                       ),
                       Positioned(
                         bottom: 0,
@@ -136,9 +89,7 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
                                   ),
                                   decoration: InputDecoration(
                                     enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -147,9 +98,7 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
                                       ),
                                     ),
                                     border: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                   ),
                                 ),
@@ -175,11 +124,12 @@ class ProfileInfoScreen extends StatelessWidget with MyColors {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 50),
                 ),
-                onPressed: () => addUser(context),
-                child: Text(
-                  'NEXT',
-                  style: GoogleFonts.roboto(fontWeight: FontWeight.w400),
+                onPressed: () => chatBodyController.addUser(
+                  context: context,
+                  name: _nameController.text.trim(),
+                  phoneNumber: phoneNumber,
                 ),
+                child: Text('NEXT', style: GoogleFonts.roboto(fontWeight: FontWeight.w400)),
               ),
             ),
           ],
