@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
+import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
 import 'package:whatsapp_clone/screen/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
@@ -79,23 +80,35 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
                       .contactData
                       .length, // change to contactController.contactData.length
                   itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: SizedBox(
-                        width: 70,
-                        child: Column(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: Image.asset("assets/no_dp.jpeg", height: 60, width: 60),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              contactController.contactData[index].contactFirstName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                    return InkWell(
+                      onTap: () async {
+                        String? currentUserId = await chatBodyController.getUserPhoneNumber();
+
+                        Get.to(
+                          () => ChatsScreen(
+                            contactDetailData: contactController.contactData[index],
+                            currentUserId: currentUserId ?? 'null',
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: SizedBox(
+                          width: 70,
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(50),
+                                child: Image.asset("assets/no_dp.jpeg", height: 60, width: 60),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                contactController.contactData[index].contactFirstName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );

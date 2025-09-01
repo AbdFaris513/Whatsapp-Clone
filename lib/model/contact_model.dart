@@ -45,19 +45,3 @@ class ContactData {
     this.labels,
   });
 }
-
-enum MessageType {
-  text,
-  image,
-  video,
-  audio,
-  document,
-  contact,
-  location,
-  gif,
-  sticker,
-  voiceNote,
-  callLog, // missed/incoming call logs
-}
-
-enum MessageStatus { sending, sent, delivered, seen, failed }

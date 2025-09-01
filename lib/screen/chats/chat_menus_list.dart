@@ -88,8 +88,14 @@ class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Get.to(() => ChatsScreen(userID: userID));
+      onTap: () async {
+        String? currentUserId = await chatBodyController.getUserPhoneNumber();
+        Get.to(
+          () => ChatsScreen(
+            contactDetailData: widget.contactData,
+            currentUserId: currentUserId ?? 'null',
+          ),
+        );
       },
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 3),
