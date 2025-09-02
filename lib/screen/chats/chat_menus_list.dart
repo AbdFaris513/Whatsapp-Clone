@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
+import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
 import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
 import 'package:whatsapp_clone/screen/chats/empty_chat_screen.dart';
@@ -15,6 +16,7 @@ import 'package:whatsapp_clone/widget/search.dart';
 class ChatMenusList extends StatelessWidget {
   ChatMenusList({super.key});
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
+  final ContactController contactController = Get.put(ContactController());
 
   @override
   Widget build(BuildContext context) {
@@ -25,33 +27,35 @@ class ChatMenusList extends StatelessWidget {
           ChartMenuAppBar(),
           SizedBox(height: 12),
 
-          if (false
+          if (true
           // chatBodyController.chatList.isNotEmpty
           ) ...[
             ChartMenuSearchBar(),
             SizedBox(height: 12),
             ChartMenuCategories(categoriesList: ['All', 'Unread', 'Favourites', 'Groups']),
             SizedBox(height: 12),
-            ChatsDetailsContainer(
-              contactData: ContactData(
-                id: '',
-                contactNumber: 'Abd',
-                contactFirstName: 'Abd',
-                contactLastMsg: 'Assalamu Alaikum',
-                contactLastMsgTime: DateTime.now(),
-                unreadMessages: 2,
+            Expanded(
+              child: Obx(
+                () => ListView.builder(
+                  itemCount: contactController.messagedContacts.length,
+                  itemBuilder: (context, index) {
+                    return ChatsDetailsContainer(
+                      contactData: contactController.messagedContacts[index],
+                    );
+                  },
+                ),
               ),
             ),
-            ChatsDetailsContainer(
-              contactData: ContactData(
-                id: '',
-                contactNumber: 'Munir',
-                contactFirstName: 'Munir',
-                contactLastMsg: 'Wa Alaikum Assalam',
-                contactLastMsgTime: DateTime.now(),
-                unreadMessages: 0,
-              ),
-            ),
+            // ChatsDetailsContainer(
+            //   contactData: ContactData(
+            //     id: '',
+            //     contactNumber: 'Munir',
+            //     contactFirstName: 'Munir',
+            //     contactLastMsg: 'Wa Alaikum Assalam',
+            //     contactLastMsgTime: DateTime.now(),
+            //     unreadMessages: 0,
+            //   ),
+            // ),
           ] else ...[
             EmptyChatScreen(),
           ],
@@ -108,9 +112,10 @@ class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
                 ClipRRect(
                   borderRadius: BorderRadiusGeometry.circular(50),
                   child: Image.asset(
-                    widget.contactData.contactImage == null
-                        ? "assets/no_dp.jpeg"
-                        : widget.contactData.contactImage!,
+                    "assets/no_dp.jpeg",
+                    // widget.contactData.contactImage == null
+                    //     ? "assets/no_dp.jpeg"
+                    //     : widget.contactData.contactImage!,
                     height: 45,
                     width: 45,
                   ),

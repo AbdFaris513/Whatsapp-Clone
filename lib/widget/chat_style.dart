@@ -18,8 +18,8 @@ class ChatStyle extends StatelessWidget with MyColors {
         margin: EdgeInsets.only(
           left: isSender ? 50 : 8,
           right: isSender ? 8 : 50,
-          top: 4,
-          bottom: 4,
+          top: 3,
+          bottom: 3,
         ),
         decoration: BoxDecoration(
           color: isSender ? MyColors.chatSenderContainerColor : MyColors.chatReciverContainerColor,

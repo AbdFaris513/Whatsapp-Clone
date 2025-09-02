@@ -56,21 +56,24 @@ class _ChatsScreenState extends State<ChatsScreen> {
                   ),
                   Expanded(
                     child: Obx(
-                      () => ListView.builder(
-                        controller: _scrollController,
-                        itemCount: chatScreenController.messages.length,
-                        itemBuilder: (context, index) {
-                          return Column(
-                            children: [
-                              ChatStyle(
-                                messageDatas: chatScreenController.messages[index],
-                                isSender:
-                                    chatScreenController.messages[index].msgSender !=
-                                    (widget.contactDetailData.contactNumber), // just for demo
-                              ),
-                            ],
-                          );
-                        },
+                      () => Container(
+                        margin: EdgeInsets.only(top: 4),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: chatScreenController.messages.length,
+                          itemBuilder: (context, index) {
+                            return Column(
+                              children: [
+                                ChatStyle(
+                                  messageDatas: chatScreenController.messages[index],
+                                  isSender:
+                                      chatScreenController.messages[index].msgSender !=
+                                      (widget.contactDetailData.contactNumber), // just for demo
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -119,7 +122,7 @@ class _ChatsScreenFooterState extends State<ChatsScreenFooter> with MyColors {
   void _handleSendMessage() {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
-      print("Send: $text");
+      print("Send: $text : ${widget.currentUserId}");
       final MessageModel messages = MessageModel(
         id: '',
         msg: text,
@@ -130,7 +133,7 @@ class _ChatsScreenFooterState extends State<ChatsScreenFooter> with MyColors {
         sendTime: DateTime.now(),
       );
 
-      chatScreenController.sendMessage(chatId: widget.currentUserId, msg: messages);
+      chatScreenController.sendMessage(msg: messages);
 
       setState(() {
         chatScreenController.messages.add(messages);

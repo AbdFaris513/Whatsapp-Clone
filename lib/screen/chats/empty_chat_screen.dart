@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
+import 'package:whatsapp_clone/controller/chat_screen_controller.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
 import 'package:whatsapp_clone/screen/contact/add_contact.dart';
@@ -16,6 +17,7 @@ class EmptyChatScreen extends StatefulWidget with MyColors {
 
 class _EmptyChatScreenState extends State<EmptyChatScreen> {
   final ContactController contactController = Get.put(ContactController());
+  final ChatScreenController chatScreenController = Get.put(ChatScreenController());
 
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
 
@@ -83,7 +85,10 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
                     return InkWell(
                       onTap: () async {
                         String? currentUserId = await chatBodyController.getUserPhoneNumber();
-
+                        await chatScreenController.listenToMessages(
+                          currentUserId ?? 'null',
+                          contactController.contactData[index].contactNumber,
+                        );
                         Get.to(
                           () => ChatsScreen(
                             contactDetailData: contactController.contactData[index],

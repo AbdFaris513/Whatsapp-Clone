@@ -38,6 +38,7 @@ class _ChatBodyScreenState extends State<ChatBodyScreen> {
   initState() {
     super.initState();
     getPhoneNumber();
+    contactController.getMessagedContacts();
   }
 
   @override

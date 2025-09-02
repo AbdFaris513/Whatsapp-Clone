@@ -1,58 +1,327 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:whatsapp_clone/model/message_model.dart';
 
+// Your MessageModel code here (unchanged)
+
 class ChatScreenController extends GetxController {
   RxList<MessageModel> messages = <MessageModel>[].obs;
-
-  /// expose messages as stream for StreamBuilder
-  Stream<List<MessageModel>> get chatStream => messages.stream;
-
+  StreamSubscription? _messagesSubscription;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final RxString _currentChatId = ''.obs;
 
-  /// load messages from Firestore in real-time
-  void listenToMessages(String chatId) {
-    _firestore
+  Stream<List<MessageModel>> get chatStream => messages.stream;
+  String get currentChatId => _currentChatId.value;
+
+  @override
+  void onClose() {
+    _messagesSubscription?.cancel();
+    super.onClose();
+  }
+
+  // Generate a consistent chat ID between two users
+  String generateChatId(String user1, String user2) {
+    final sortedIds = [user1, user2]..sort();
+    return 'chat_${sortedIds[0]}_${sortedIds[1]}';
+  }
+
+  // Ensure chat document exists
+  Future<void> _ensureChatExists(String chatId, String user1, String user2) async {
+    final chatDoc = _firestore.collection('chats').doc(chatId);
+    final docSnapshot = await chatDoc.get();
+
+    if (!docSnapshot.exists) {
+      await chatDoc.set({
+        'participants': {user1: true, user2: true},
+        'participantIds': [user1, user2],
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastMessage': '',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSender': '',
+        'unreadCounts': {user1: 0, user2: 0},
+      });
+    }
+  }
+
+  // Start listening to messages for a chat
+  Future<void> listenToMessages(String user1, String user2) async {
+    _messagesSubscription?.cancel();
+
+    final chatId = generateChatId(user1, user2);
+    _currentChatId.value = chatId;
+
+    _messagesSubscription = _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
         .orderBy('sendTime', descending: false)
         .snapshots()
-        .listen((snapshot) {
-          final msgList = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return MessageModel(
-              id: doc.id,
-              msg: data['msg'] ?? '',
-              msgSender: data['msgSender'] ?? '',
-              msgReceiver: data['msgReceiver'] ?? '',
-              type: MessageType.text, // you can map enum properly if stored
-              status: MessageStatus.delivered, // map from data if stored
-              sendTime: (data['sendTime'] as Timestamp).toDate(),
-              receiveTime: (data['receiveTime'] as Timestamp?)?.toDate(),
-              viewTime: (data['viewTime'] as Timestamp?)?.toDate(),
-            );
-          }).toList();
+        .listen(
+          (snapshot) {
+            final msgList = snapshot.docs.map((doc) {
+              final data = doc.data();
+              return MessageModel(
+                id: doc.id,
+                msg: data['msg'] ?? '',
+                msgSender: data['msgSender'] ?? '',
+                msgReceiver: data['msgReceiver'] ?? '',
+                type: MessageType.values.firstWhere(
+                  (e) => e.name == data['type'],
+                  orElse: () => MessageType.text,
+                ),
+                status: MessageStatus.values.firstWhere(
+                  (e) => e.name == data['status'],
+                  orElse: () => MessageStatus.sent,
+                ),
+                sendTime: (data['sendTime'] as Timestamp).toDate(),
+                receiveTime: (data['receiveTime'] as Timestamp?)?.toDate(),
+                viewTime: (data['viewTime'] as Timestamp?)?.toDate(),
+                isForward: data['isForward'] ?? false,
+                originalSender: data['originalSender'],
+                isReplied: data['isReplied'] ?? false,
+                replyMsgId: data['replyMsgId'],
+                isStarred: data['isStarred'] ?? false,
+                isEdited: data['isEdited'] ?? false,
+                mediaUrl: data['mediaUrl'],
+                thumbnailUrl: data['thumbnailUrl'],
+                duration: data['duration'] != null
+                    ? Duration(milliseconds: data['duration'])
+                    : null,
+              );
+            }).toList();
 
-          messages.assignAll(msgList);
-        });
+            messages.assignAll(msgList);
+          },
+          onError: (error) {
+            print('Error listening to messages: $error');
+          },
+        );
   }
 
-  /// send a message to Firestore
-  Future<void> sendMessage({required String chatId, required MessageModel msg}) async {
-    await _firestore.collection('chats').doc(chatId).collection('messages').add({
-      'msg': msg.msg,
-      'msgSender': msg.msgSender,
-      'msgReceiver': msg.msgReceiver,
-      'sendTime': msg.sendTime,
-      'receiveTime': msg.receiveTime,
-      'viewTime': msg.viewTime,
-      'type': msg.type.toString(),
-      'status': msg.status.toString(),
-    });
+  // Send a message
+  Future<void> sendMessage({required MessageModel msg}) async {
+    try {
+      final chatId = generateChatId(msg.msgSender, msg.msgReceiver);
+
+      // Ensure chat exists first
+      await _ensureChatExists(chatId, msg.msgSender, msg.msgReceiver);
+
+      // Prepare message data for Firestore
+      final messageData = {
+        'msg': msg.msg,
+        'msgSender': msg.msgSender,
+        'msgReceiver': msg.msgReceiver,
+        'type': msg.type.name,
+        'status': MessageStatus.sent.name,
+        'sendTime': FieldValue.serverTimestamp(),
+        'receiveTime': null,
+        'viewTime': null,
+        'isForward': msg.isForward,
+        'originalSender': msg.originalSender,
+        'isReplied': msg.isReplied,
+        'replyMsgId': msg.replyMsgId,
+        'isStarred': msg.isStarred,
+        'isEdited': msg.isEdited,
+        'mediaUrl': msg.mediaUrl,
+        'thumbnailUrl': msg.thumbnailUrl,
+        'duration': msg.duration?.inMilliseconds,
+      };
+
+      // Use batch write for atomic operations
+      final batch = _firestore.batch();
+
+      // Add message to subcollection
+      final messageRef = _firestore.collection('chats').doc(chatId).collection('messages').doc();
+
+      batch.set(messageRef, messageData);
+
+      // Update chat document with last message info
+      final chatRef = _firestore.collection('chats').doc(chatId);
+      batch.update(chatRef, {
+        'lastMessage': msg.msg,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSender': msg.msgSender,
+        'lastMessageType': msg.type.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'unreadCounts.${msg.msgReceiver}': FieldValue.increment(1),
+      });
+
+      await batch.commit();
+    } catch (e) {
+      print('Error sending message: $e');
+      rethrow;
+    }
+  }
+
+  // Update message status
+  Future<void> updateMessageStatus({
+    required String messageId,
+    required MessageStatus status,
+    required String userId,
+  }) async {
+    try {
+      final chatId = currentChatId;
+      if (chatId.isEmpty) return;
+
+      final updateData = {'status': status.name, 'updatedAt': FieldValue.serverTimestamp()};
+
+      // Add timestamp based on status
+      if (status == MessageStatus.delivered) {
+        updateData['receiveTime'] = FieldValue.serverTimestamp();
+      } else if (status == MessageStatus.seen) {
+        updateData['viewTime'] = FieldValue.serverTimestamp();
+
+        // Reset unread count for this user
+        await _firestore.collection('chats').doc(chatId).update({'unreadCounts.$userId': 0});
+      }
+
+      await _firestore
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId)
+          .update(updateData);
+    } catch (e) {
+      print('Error updating message status: $e');
+    }
+  }
+
+  // Get all chats for a user
+  Stream<QuerySnapshot> getUserChats(String userId) {
+    return _firestore
+        .collection('chats')
+        .where('participantIds', arrayContains: userId)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots();
   }
 }
 
+// Example UI for the chat screen
+class ChatScreen extends StatelessWidget {
+  final String currentUserId;
+  final String otherUserId;
+
+  ChatScreen({super.key, required this.currentUserId, required this.otherUserId});
+
+  final ChatScreenController controller = Get.put(ChatScreenController());
+  final TextEditingController messageController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    // Start listening to messages when screen is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.listenToMessages(currentUserId, otherUserId);
+    });
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Chat with $otherUserId')),
+      body: Column(
+        children: [
+          Expanded(
+            child: Obx(
+              () => ListView.builder(
+                itemCount: controller.messages.length,
+                itemBuilder: (context, index) {
+                  final message = controller.messages[index];
+                  final isMe = message.msgSender == currentUserId;
+
+                  return ChatMessageBubble(message: message, isMe: isMe);
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () async {
+                    if (messageController.text.trim().isNotEmpty) {
+                      final message = MessageModel(
+                        id: '', // Will be generated by Firestore
+                        msg: messageController.text,
+                        msgSender: currentUserId,
+                        msgReceiver: otherUserId,
+                        type: MessageType.text,
+                        status: MessageStatus.sending,
+                        sendTime: DateTime.now(),
+                      );
+
+                      await controller.sendMessage(msg: message);
+                      messageController.clear();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Chat message bubble widget
+class ChatMessageBubble extends StatelessWidget {
+  final MessageModel message;
+  final bool isMe;
+
+  const ChatMessageBubble({super.key, required this.message, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blue[100] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (message.isReplied && message.replyMsgId != null)
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Replying to message',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              ),
+            if (message.isForward)
+              Text(
+                'Forwarded from ${message.originalSender}',
+                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+              ),
+            Text(message.msg),
+            SizedBox(height: 4),
+            Text(message.messageTime, style: TextStyle(fontSize: 10, color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+}
   // RxList<MessageModel> messages = [
   //   MessageModel(
   //     id: '1',

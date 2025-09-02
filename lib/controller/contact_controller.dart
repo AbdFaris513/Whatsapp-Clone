@@ -17,6 +17,9 @@ class ContactController extends GetxController {
     // ContactData(contactFirstName: "Diana", contactNumber: "+1098765432"),
   ].obs;
 
+  // RxList<ContactData> contactData = <ContactData>[].obs;
+  RxList<ContactData> messagedContacts = <ContactData>[].obs; // New list for messaged contacts
+
   Future<bool> doesUserExist(String phoneNumber) async {
     final doc = await FirebaseFirestore.instance.collection('users').doc(phoneNumber).get();
     return doc.exists;
@@ -179,5 +182,197 @@ class ContactController extends GetxController {
     } catch (e) {
       debugPrint('Error fetching contact list: $e');
     }
+  }
+
+  /// *************************************************************** //
+  // New function to get only contacts that have existing messages
+  Future<void> getMessagedContacts() async {
+    try {
+      debugPrint('Come here msg');
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) {
+        debugPrint('No logged in user found');
+        return;
+      }
+
+      // Clear the list first
+      messagedContacts.clear();
+
+      // Get all chats where current user is a participant
+      final chatsQuery = await FirebaseFirestore.instance
+          .collection('chats')
+          .where('participantIds', arrayContains: currentUserId)
+          .orderBy('lastMessageTime', descending: true)
+          .get();
+
+      for (final chatDoc in chatsQuery.docs) {
+        final chatData = chatDoc.data();
+        final List<dynamic> participantIds = chatData['participantIds'] ?? [];
+
+        // Find the other participant (not the current user)
+        final String otherParticipantId = participantIds.firstWhere(
+          (id) => id != currentUserId,
+          orElse: () => null,
+        );
+
+        // Get user details for the other participant
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(otherParticipantId)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+
+          // Get the last message details from the chat
+          final lastMessage = chatData['lastMessage'] ?? '';
+          final lastMessageTime = (chatData['lastMessageTime'] as Timestamp?)?.toDate();
+          final lastMessageType = chatData['lastMessageType'] ?? 'text';
+          final lastMessageSender = chatData['lastMessageSender'] ?? '';
+
+          // Get unread count for current user
+          final unreadCounts = chatData['unreadCounts'] as Map<String, dynamic>? ?? {};
+          final unreadMessages = unreadCounts[currentUserId] ?? 0;
+
+          // Check if this contact is already in our contact list
+          final existingContact = contactData.firstWhere(
+            (contact) => contact.contactNumber == otherParticipantId,
+            orElse: () => ContactData(
+              id: otherParticipantId,
+              contactFirstName: 'Unknown',
+              contactNumber: otherParticipantId,
+            ),
+          );
+
+          print('sxcsd ${userData['lastSeen']}');
+
+          // Create ContactData with message history
+          final ContactData messagedContact = ContactData(
+            id: otherParticipantId,
+            contactFirstName: userData['name'] ?? existingContact.contactFirstName,
+            contactSecondName: existingContact.contactSecondName,
+            contactBusinessName: existingContact.contactBusinessName,
+            contactNumber: otherParticipantId,
+            contactStatus: userData['about'] ?? existingContact.contactStatus,
+            contactImage: userData['profilePicture'] ?? existingContact.contactImage,
+            contactLastSeen: DateTime.tryParse(
+              userData['lastSeen'].toString(),
+            ), // (userData['lastSeen'] as Timestamp?)?.toDate(),
+            contactLastMsgTime: lastMessageTime,
+            contactLastMsg: lastMessage,
+            contactLastMsgType: lastMessageType,
+            unreadMessages: unreadMessages,
+            isContactPinned: existingContact.isContactPinned,
+            isContactMuted: existingContact.isContactMuted,
+            isContactBlocked: existingContact.isContactBlocked,
+            isContactArchived: existingContact.isContactArchived,
+            isOnline: userData['isOnline'] ?? false,
+            about: userData['about'] ?? existingContact.about,
+            lastMessageId: chatDoc.id,
+            lastInteraction: lastMessageTime,
+            labels: existingContact.labels,
+          );
+
+          messagedContacts.add(messagedContact);
+        }
+      }
+
+      // Sort by last message time (most recent first)
+      messagedContacts.sort((a, b) {
+        final aTime = a.contactLastMsgTime ?? DateTime(0);
+        final bTime = b.contactLastMsgTime ?? DateTime(0);
+        return bTime.compareTo(aTime);
+      });
+
+      messagedContacts.refresh();
+      debugPrint('Found ${messagedContacts.length} messaged contacts');
+    } catch (e) {
+      debugPrint('Error getting messaged contacts: $e');
+    }
+  }
+
+  // Optional: Stream version for real-time updates
+  Stream<List<ContactData>> getMessagedContactsStream() {
+    return FirebaseFirestore.instance
+        .collection('chats')
+        .where('participantIds', arrayContains: _getCurrentUserId())
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots()
+        .asyncMap((chatsSnapshot) async {
+          final List<ContactData> contacts = [];
+          final String? currentUserId = await _getCurrentUserIdAsync();
+
+          if (currentUserId == null) return contacts;
+
+          for (final chatDoc in chatsSnapshot.docs) {
+            final chatData = chatDoc.data();
+            final List<dynamic> participantIds = chatData['participantIds'] ?? [];
+
+            final String otherParticipantId = participantIds.firstWhere(
+              (id) => id != currentUserId,
+              orElse: () => null,
+            );
+
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(otherParticipantId)
+                .get();
+
+            if (userDoc.exists) {
+              final userData = userDoc.data() as Map<String, dynamic>;
+              final existingContact = contactData.firstWhere(
+                (contact) => contact.contactNumber == otherParticipantId,
+                orElse: () => ContactData(
+                  id: otherParticipantId,
+                  contactFirstName: 'Unknown',
+                  contactNumber: otherParticipantId,
+                ),
+              );
+
+              final lastMessageTime = (chatData['lastMessageTime'] as Timestamp?)?.toDate();
+
+              contacts.add(
+                ContactData(
+                  id: otherParticipantId,
+                  contactFirstName: userData['name'] ?? existingContact.contactFirstName,
+                  contactNumber: otherParticipantId,
+                  contactStatus: userData['about'],
+                  contactImage: userData['profilePicture'],
+                  contactLastSeen: (userData['lastSeen'] as Timestamp?)?.toDate(),
+                  contactLastMsgTime: lastMessageTime,
+                  contactLastMsg: chatData['lastMessage'] ?? '',
+                  contactLastMsgType: chatData['lastMessageType'] ?? 'text',
+                  unreadMessages:
+                      (chatData['unreadCounts'] as Map<String, dynamic>?)?[currentUserId] ?? 0,
+                  isOnline: userData['isOnline'] ?? false,
+                  about: userData['about'],
+                  lastInteraction: lastMessageTime,
+                ),
+              );
+            }
+          }
+
+          return contacts;
+        });
+  }
+
+  // Helper method to get current user ID
+  Future<String?> _getCurrentUserIdAsync() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('loggedInPhone');
+  }
+
+  // Helper method for stream version (you might need to adjust this)
+  String _getCurrentUserId() {
+    // This is a simplified version - you might want to use a different approach
+    // for getting the current user ID synchronously
+    return Get.find<SharedPreferences>().getString('loggedInPhone') ?? '';
+  }
+
+  // Call this function when you want to refresh messaged contacts
+  Future<void> refreshMessagedContacts() async {
+    await getMessagedContacts();
   }
 }
