@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
 import 'package:whatsapp_clone/controller/chat_screen_controller.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
-import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
+import 'package:whatsapp_clone/screen/chats/first_controller.dart';
 import 'package:whatsapp_clone/screen/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 
@@ -18,7 +18,7 @@ class EmptyChatScreen extends StatefulWidget with MyColors {
 class _EmptyChatScreenState extends State<EmptyChatScreen> {
   final ContactController contactController = Get.put(ContactController());
   final ChatScreenController chatScreenController = Get.put(ChatScreenController());
-
+  final FirstController firstController = Get.put(FirstController());
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
 
   void _openPopupAfterDelay() async {
@@ -84,16 +84,9 @@ class _EmptyChatScreenState extends State<EmptyChatScreen> {
                   itemBuilder: (context, index) {
                     return InkWell(
                       onTap: () async {
-                        String? currentUserId = await chatBodyController.getUserPhoneNumber();
-                        await chatScreenController.listenToMessages(
-                          currentUserId ?? 'null',
-                          contactController.contactData[index].contactNumber,
-                        );
-                        Get.to(
-                          () => ChatsScreen(
-                            contactDetailData: contactController.contactData[index],
-                            currentUserId: currentUserId ?? 'null',
-                          ),
+                        await firstController.getChatScreen(
+                          context: context,
+                          contactData: contactController.contactData[index],
                         );
                       },
                       child: Padding(

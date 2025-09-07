@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
+import 'package:whatsapp_clone/screen/chats/first_controller.dart';
 import 'package:whatsapp_clone/screen/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/search.dart';
@@ -86,57 +87,64 @@ class ContactDetailsContainer extends StatelessWidget with MyColors {
   final ContactData contactData;
   ContactDetailsContainer({super.key, required this.contactData});
 
+  final FirstController firstController = Get.put(FirstController());
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadiusGeometry.circular(50),
-                child: Image.asset(
-                  contactData.contactImage == null
-                      ? "assets/no_dp.jpeg"
-                      : contactData.contactImage!,
-                  height: 45,
-                  width: 45,
+    return InkWell(
+      onTap: () async {
+        await firstController.getChatScreen(context: context, contactData: contactData);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadiusGeometry.circular(50),
+                  child: Image.asset(
+                    contactData.contactImage == null
+                        ? "assets/no_dp.jpeg"
+                        : contactData.contactImage!,
+                    height: 45,
+                    width: 45,
+                  ),
                 ),
-              ),
-              SizedBox(width: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    contactData.contactFirstName,
-                    style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 18,
-                      color: MyColors.foregroundColor,
+                SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      contactData.contactFirstName,
+                      style: GoogleFonts.roboto(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        color: MyColors.foregroundColor,
+                      ),
                     ),
-                  ),
-                  Text(
-                    contactData.contactStatus ?? '',
-                    style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Mobile',
-                style: GoogleFonts.roboto(fontSize: 11, color: MyColors.searchHintTextColor),
-              ),
-            ],
-          ),
-        ],
+                    Text(
+                      contactData.contactStatus ?? '',
+                      style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Mobile',
+                  style: GoogleFonts.roboto(fontSize: 11, color: MyColors.searchHintTextColor),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

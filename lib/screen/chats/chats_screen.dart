@@ -93,6 +93,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
 }
 
 // Footer
+// ignore: must_be_immutable
 class ChatsScreenFooter extends StatefulWidget with MyColors {
   String currentUserId;
   ContactData contactDetailData;
@@ -122,7 +123,7 @@ class _ChatsScreenFooterState extends State<ChatsScreenFooter> with MyColors {
   void _handleSendMessage() {
     final text = _messageController.text.trim();
     if (text.isNotEmpty) {
-      print("Send: $text : ${widget.currentUserId}");
+      debugPrint("Send: $text : ${widget.currentUserId}");
       final MessageModel messages = MessageModel(
         id: '',
         msg: text,
@@ -149,7 +150,7 @@ class _ChatsScreenFooterState extends State<ChatsScreenFooter> with MyColors {
         );
       });
     } else {
-      print("Mic pressed");
+      debugPrint("Mic pressed");
     }
   }
 
@@ -248,6 +249,7 @@ class _ChatsScreenFooterState extends State<ChatsScreenFooter> with MyColors {
 }
 
 // Header
+// ignore: must_be_immutable
 class ChatsScreenHeader extends StatelessWidget with MyColors {
   String currentUserId;
   ContactData contactDetailData;

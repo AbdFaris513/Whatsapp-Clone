@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:whatsapp_clone/screen/chats/chat_body.dart';
-import 'package:whatsapp_clone/screen/first_screen.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/from_facebook.dart';
+
+import 'chats/first_controller.dart';
 
 class SplashScreen extends StatefulWidget with MyColors {
   const SplashScreen({super.key});
@@ -15,27 +15,11 @@ class SplashScreen extends StatefulWidget with MyColors {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final FirstController firstController = Get.put(FirstController());
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
-  }
-
-  void _checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    final prefs = await SharedPreferences.getInstance();
-    bool userExists = prefs.containsKey('loggedInPhone');
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              userExists ? ChatBodyScreen() : const FirstScreen(),
-        ),
-      );
-    }
+    firstController.checkLoginStatus(mounted, context);
   }
 
   @override

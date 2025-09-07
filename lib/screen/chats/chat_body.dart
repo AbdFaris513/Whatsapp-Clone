@@ -27,8 +27,9 @@ class _ChatBodyScreenState extends State<ChatBodyScreen> {
 
     if (phoneNumber != null && phoneNumber!.isNotEmpty) {
       debugPrint('Logged-in phone number: $phoneNumber');
-      // Call the function after getting the phone number
-      await contactController.getUserContactList(phoneNumber!);
+      // Call both functions after getting the phone number
+      await contactController.getUserContactList(phoneNumber: phoneNumber!);
+      await contactController.setupMessagedContactsStream(); // ← ADD THIS LINE
     } else {
       debugPrint('No phone number saved.');
     }
@@ -38,7 +39,13 @@ class _ChatBodyScreenState extends State<ChatBodyScreen> {
   initState() {
     super.initState();
     getPhoneNumber();
-    contactController.getMessagedContacts();
+  }
+
+  @override
+  void dispose() {
+    // Clean up when widget is disposed
+    contactController.messagedContacts.clear();
+    super.dispose();
   }
 
   @override

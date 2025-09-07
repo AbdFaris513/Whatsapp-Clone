@@ -16,7 +16,7 @@ class EnterNumber extends StatefulWidget with MyColors {
 
 class _EnterNumberState extends State<EnterNumber> {
   void _onPrivacyPolicyTap() {
-    print('Privacy Policy tapped');
+    debugPrint('Privacy Policy tapped');
     // Navigate or handle logic here
   }
 
@@ -24,9 +24,7 @@ class _EnterNumberState extends State<EnterNumber> {
   final List<String> items = ['India', 'USA', 'Finland'];
 
   final TextEditingController _phoneNumberController = TextEditingController();
-  final TextEditingController _countryCodeController = TextEditingController(
-    text: '+91',
-  );
+  final TextEditingController _countryCodeController = TextEditingController(text: '+91');
 
   String showTopSnackBarWithOTP(BuildContext context) {
     final overlay = Overlay.of(context);
@@ -47,10 +45,7 @@ class _EnterNumberState extends State<EnterNumber> {
               color: Colors.green[700],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(
-              'Your OTP is: $otp',
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
+            child: Text('Your OTP is: $otp', style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         ),
       ),
@@ -83,27 +78,17 @@ class _EnterNumberState extends State<EnterNumber> {
                   ),
                   SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16),
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: TextStyle(
-                          color: MyColors.foregroundColor,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: MyColors.foregroundColor, fontSize: 14),
                         children: [
-                          const TextSpan(
-                            text:
-                                'WhatsApp will need to verify your phone number.',
-                          ),
+                          const TextSpan(text: 'WhatsApp will need to verify your phone number.'),
                           TextSpan(
                             text: " What’s my number?",
                             style: const TextStyle(color: Colors.blue),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = _onPrivacyPolicyTap,
+                            recognizer: TapGestureRecognizer()..onTap = _onPrivacyPolicyTap,
                           ),
                         ],
                       ),
@@ -125,24 +110,16 @@ class _EnterNumberState extends State<EnterNumber> {
                               isExpanded: true,
                               value: selectedValue,
                               icon: Icon(Icons.arrow_drop_down),
-                              style: TextStyle(
-                                color: MyColors.foregroundColor,
-                                fontSize: 16,
-                              ),
+                              style: TextStyle(color: MyColors.foregroundColor, fontSize: 16),
 
-                              underline: Container(
-                                height: 1,
-                                color: MyColors.greenGroundColor,
-                              ),
+                              underline: Container(height: 1, color: MyColors.greenGroundColor),
                               alignment: Alignment.center,
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedValue = newValue!;
                                 });
                               },
-                              items: items.map<DropdownMenuItem<String>>((
-                                String value,
-                              ) {
+                              items: items.map<DropdownMenuItem<String>>((String value) {
                                 return DropdownMenuItem<String>(
                                   alignment: Alignment.center,
                                   value: value,
@@ -169,9 +146,7 @@ class _EnterNumberState extends State<EnterNumber> {
                                   decoration: InputDecoration(
                                     contentPadding: EdgeInsets.only(bottom: 0),
                                     enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -180,9 +155,7 @@ class _EnterNumberState extends State<EnterNumber> {
                                       ),
                                     ),
                                     border: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                   ),
                                 ),
@@ -209,9 +182,7 @@ class _EnterNumberState extends State<EnterNumber> {
                                   ),
                                   decoration: InputDecoration(
                                     enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                     focusedBorder: UnderlineInputBorder(
                                       borderSide: BorderSide(
@@ -220,9 +191,7 @@ class _EnterNumberState extends State<EnterNumber> {
                                       ),
                                     ),
                                     border: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: MyColors.greenGroundColor,
-                                      ),
+                                      borderSide: BorderSide(color: MyColors.greenGroundColor),
                                     ),
                                   ),
                                 ),
@@ -262,10 +231,8 @@ class _EnterNumberState extends State<EnterNumber> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EnterOtpScreen(
-                        verificationId: otp,
-                        phoneNumber: fullPhoneNumber,
-                      ),
+                      builder: (context) =>
+                          EnterOtpScreen(verificationId: otp, phoneNumber: fullPhoneNumber),
                     ),
                   );
 
@@ -306,10 +273,7 @@ class _EnterNumberState extends State<EnterNumber> {
                   //   );
                   // }
                 },
-                child: Text(
-                  'NEXT',
-                  style: GoogleFonts.roboto(fontWeight: FontWeight.w400),
-                ),
+                child: Text('NEXT', style: GoogleFonts.roboto(fontWeight: FontWeight.w400)),
               ),
             ),
           ],

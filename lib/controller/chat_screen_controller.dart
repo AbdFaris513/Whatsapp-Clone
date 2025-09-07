@@ -77,9 +77,10 @@ class ChatScreenController extends GetxController {
                   (e) => e.name == data['status'],
                   orElse: () => MessageStatus.sent,
                 ),
-                sendTime: (data['sendTime'] as Timestamp).toDate(),
+                sendTime: (data['sendTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
                 receiveTime: (data['receiveTime'] as Timestamp?)?.toDate(),
                 viewTime: (data['viewTime'] as Timestamp?)?.toDate(),
+
                 isForward: data['isForward'] ?? false,
                 originalSender: data['originalSender'],
                 isReplied: data['isReplied'] ?? false,
@@ -97,7 +98,7 @@ class ChatScreenController extends GetxController {
             messages.assignAll(msgList);
           },
           onError: (error) {
-            print('Error listening to messages: $error');
+            debugPrint('Error listening to messages: $error');
           },
         );
   }
@@ -152,7 +153,7 @@ class ChatScreenController extends GetxController {
 
       await batch.commit();
     } catch (e) {
-      print('Error sending message: $e');
+      debugPrint('Error sending message: $e');
       rethrow;
     }
   }
@@ -186,7 +187,7 @@ class ChatScreenController extends GetxController {
           .doc(messageId)
           .update(updateData);
     } catch (e) {
-      print('Error updating message status: $e');
+      debugPrint('Error updating message status: $e');
     }
   }
 

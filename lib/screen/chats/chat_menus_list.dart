@@ -9,14 +9,38 @@ import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/model/contact_model.dart';
 import 'package:whatsapp_clone/screen/chats/chats_screen.dart';
 import 'package:whatsapp_clone/screen/chats/empty_chat_screen.dart';
+import 'package:whatsapp_clone/screen/chats/first_controller.dart';
 import 'package:whatsapp_clone/screen/first_screen.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/search.dart';
 
-class ChatMenusList extends StatelessWidget {
-  ChatMenusList({super.key});
+class ChatMenusList extends StatefulWidget {
+  const ChatMenusList({super.key});
+
+  @override
+  State<ChatMenusList> createState() => _ChatMenusListState();
+}
+
+class _ChatMenusListState extends State<ChatMenusList> {
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
   final ContactController contactController = Get.put(ContactController());
+
+  @override
+  void initState() {
+    super.initState();
+    // Set up the real-time stream instead of one-time call
+    debugPrint('Call @initState');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      contactController.setupMessagedContactsStream();
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clean up when widget is disposed
+    contactController.messagedContacts.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,38 +51,33 @@ class ChatMenusList extends StatelessWidget {
           ChartMenuAppBar(),
           SizedBox(height: 12),
 
-          if (true
-          // chatBodyController.chatList.isNotEmpty
-          ) ...[
-            ChartMenuSearchBar(),
-            SizedBox(height: 12),
-            ChartMenuCategories(categoriesList: ['All', 'Unread', 'Favourites', 'Groups']),
-            SizedBox(height: 12),
-            Expanded(
-              child: Obx(
-                () => ListView.builder(
-                  itemCount: contactController.messagedContacts.length,
-                  itemBuilder: (context, index) {
-                    return ChatsDetailsContainer(
-                      contactData: contactController.messagedContacts[index],
-                    );
-                  },
+          // Use Obx to automatically rebuild when messagedContacts changes
+          Obx(() {
+            if (contactController.messagedContacts.isNotEmpty) {
+              return Expanded(
+                child: Column(
+                  children: [
+                    ChartMenuSearchBar(),
+                    SizedBox(height: 12),
+                    ChartMenuCategories(categoriesList: ['All', 'Unread', 'Favourites', 'Groups']),
+                    SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: contactController.messagedContacts.length,
+                        itemBuilder: (context, index) {
+                          return ChatsDetailsContainer(
+                            contactData: contactController.messagedContacts[index],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            // ChatsDetailsContainer(
-            //   contactData: ContactData(
-            //     id: '',
-            //     contactNumber: 'Munir',
-            //     contactFirstName: 'Munir',
-            //     contactLastMsg: 'Wa Alaikum Assalam',
-            //     contactLastMsgTime: DateTime.now(),
-            //     unreadMessages: 0,
-            //   ),
-            // ),
-          ] else ...[
-            EmptyChatScreen(),
-          ],
+              );
+            } else {
+              return EmptyChatScreen();
+            }
+          }),
         ],
       ),
     );
@@ -76,6 +95,7 @@ class ChatsDetailsContainer extends StatefulWidget with MyColors {
 
 class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
+  final FirstController firstController = Get.put(FirstController());
 
   late final String? userID;
 
@@ -101,78 +121,86 @@ class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
           ),
         );
       },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 3),
-        margin: EdgeInsets.only(bottom: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadiusGeometry.circular(50),
-                  child: Image.asset(
-                    "assets/no_dp.jpeg",
-                    // widget.contactData.contactImage == null
-                    //     ? "assets/no_dp.jpeg"
-                    //     : widget.contactData.contactImage!,
-                    height: 45,
-                    width: 45,
+      child: InkWell(
+        onTap: () async {
+          await firstController.getChatScreen(context: context, contactData: widget.contactData);
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 3),
+          margin: EdgeInsets.only(bottom: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadiusGeometry.circular(50),
+                    child: Image.asset(
+                      "assets/no_dp.jpeg",
+                      // widget.contactData.contactImage == null
+                      //     ? "assets/no_dp.jpeg"
+                      //     : widget.contactData.contactImage!,
+                      height: 45,
+                      width: 45,
+                    ),
                   ),
-                ),
-                SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.contactData.contactFirstName,
-                      style: GoogleFonts.roboto(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        color: MyColors.foregroundColor,
+                  SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.contactData.contactFirstName,
+                        style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          color: MyColors.foregroundColor,
+                        ),
+                      ),
+                      Text(
+                        widget.contactData.contactLastMsg ?? '',
+                        style: GoogleFonts.roboto(
+                          fontSize: 14,
+                          color: MyColors.searchHintTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    chatBodyController.formatLastInteraction(widget.contactData.contactLastMsgTime),
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      color: (widget.contactData.unreadMessages) > 0
+                          ? MyColors.massageNotificationColor
+                          : MyColors.searchHintTextColor,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: CircleAvatar(
+                      radius: 10,
+                      backgroundColor: widget.contactData.unreadMessages > 0
+                          ? MyColors.massageNotificationColor
+                          : Colors.transparent,
+                      foregroundColor: widget.contactData.unreadMessages > 0
+                          ? MyColors.backgroundColor
+                          : Colors.transparent,
+                      child: Text(
+                        widget.contactData.unreadMessages.toString(),
+                        style: GoogleFonts.roboto(fontSize: 11, color: MyColors.backgroundColor),
                       ),
                     ),
-                    Text(
-                      widget.contactData.contactLastMsg ?? '',
-                      style: GoogleFonts.roboto(fontSize: 14, color: MyColors.searchHintTextColor),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  chatBodyController.formatLastInteraction(widget.contactData.contactLastMsgTime),
-                  style: GoogleFonts.roboto(
-                    fontSize: 11,
-                    color: (widget.contactData.unreadMessages) > 0
-                        ? MyColors.massageNotificationColor
-                        : MyColors.searchHintTextColor,
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: CircleAvatar(
-                    radius: 10,
-                    backgroundColor: widget.contactData.unreadMessages > 0
-                        ? MyColors.massageNotificationColor
-                        : Colors.transparent,
-                    foregroundColor: widget.contactData.unreadMessages > 0
-                        ? MyColors.backgroundColor
-                        : Colors.transparent,
-                    child: Text(
-                      widget.contactData.unreadMessages.toString(),
-                      style: GoogleFonts.roboto(fontSize: 11, color: MyColors.backgroundColor),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -263,11 +291,13 @@ class ChartMenuAppBar extends StatelessWidget with MyColors {
 
                   // Optional: Navigate to login screen
                   Navigator.pushReplacement(
+                    // ignore: use_build_context_synchronously
                     context,
                     MaterialPageRoute(builder: (context) => FirstScreen()),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(
+                    // ignore: use_build_context_synchronously
                     context,
                   ).showSnackBar(SnackBar(content: Text('Logout failed: ${e.toString()}')));
                 }

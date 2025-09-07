@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whatsapp_clone/screen/chats/chat_body.dart';
@@ -38,6 +39,7 @@ class ChatBodyController extends GetxController {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('loggedInPhone', phoneNumber);
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => ChatBodyScreen()),
         );

@@ -9,12 +9,12 @@ class FirstScreen extends StatelessWidget with MyColors {
   const FirstScreen({super.key});
 
   void _onPrivacyPolicyTap() {
-    print('Privacy Policy tapped');
+    debugPrint('Privacy Policy tapped');
     // Navigate or handle logic here
   }
 
   void _onTermsOfServiceTap() {
-    print('Terms of Service tapped');
+    debugPrint('Terms of Service tapped');
     // Navigate or handle logic here
   }
 
@@ -30,40 +30,26 @@ class FirstScreen extends StatelessWidget with MyColors {
             Expanded(
               child: Column(
                 children: [
-                  Image.asset(
-                    "assets/first_page_img_b.png",
-                    width: 250,
-                    height: 250,
-                  ),
+                  Image.asset("assets/first_page_img_b.png", width: 250, height: 250),
                   SizedBox(height: 50),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: TextStyle(
-                          color: MyColors.foregroundColor,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: MyColors.foregroundColor, fontSize: 14),
                         children: [
                           const TextSpan(text: 'Read our '),
                           TextSpan(
                             text: "Privacy Policy. ",
                             style: const TextStyle(color: Colors.blue),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = _onPrivacyPolicyTap,
+                            recognizer: TapGestureRecognizer()..onTap = _onPrivacyPolicyTap,
                           ),
-                          const TextSpan(
-                            text: "Tap “Agree and continue” to accept the ",
-                          ),
+                          const TextSpan(text: "Tap “Agree and continue” to accept the "),
                           TextSpan(
                             text: 'Terms of Service.',
                             style: const TextStyle(color: Colors.blue),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = _onTermsOfServiceTap,
+                            recognizer: TapGestureRecognizer()..onTap = _onTermsOfServiceTap,
                           ),
                         ],
                       ),
@@ -75,9 +61,7 @@ class FirstScreen extends StatelessWidget with MyColors {
                       backgroundColor: MyColors.greenGroundColor,
                       foregroundColor: MyColors.backgroundColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          2,
-                        ), // Rounded corners
+                        borderRadius: BorderRadius.circular(2), // Rounded corners
                       ),
                       padding: EdgeInsets.symmetric(horizontal: 50),
                     ),

@@ -2,8 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:whatsapp_clone/controller/contact_controller.dart';
 import 'package:whatsapp_clone/screen/chats/chat_body.dart';
 import 'package:whatsapp_clone/screen/profile_info.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
@@ -13,6 +15,8 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
   final String phoneNumber;
 
   EnterOtpScreen({super.key, required this.verificationId, required this.phoneNumber});
+
+  final ContactController contactController = Get.put(ContactController());
 
   final TextEditingController _controller = TextEditingController(text: "- - - - - -");
 
@@ -62,6 +66,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
 
       if (!doc.exists) {
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => ProfileInfoScreen(phoneNumber: phoneNumber)),
         );
@@ -70,7 +75,11 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('loggedInPhone', phoneNumber);
 
+        contactController.getMessagedContactsStream();
+        await contactController.getUserContactList(phoneNumber: phoneNumber);
+
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => ChatBodyScreen()),
         );
@@ -185,7 +194,7 @@ class EnterOtpScreen extends StatelessWidget with MyColors {
                       ),
                       const SizedBox(width: 10),
                       TextButton(
-                        onPressed: () => print("Call Me tapped"),
+                        onPressed: () => debugPrint("Call Me tapped"),
                         child: const Text("Call Me", style: TextStyle(color: Colors.blue)),
                       ),
                     ],
