@@ -23,6 +23,8 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
   String? firstNameError;
   String? phoneNumberError;
 
+  RxString selectedCountryCode = "+91".obs;
+
   final InputDecoration baseDecoration = InputDecoration(
     labelStyle: const TextStyle(color: Colors.grey),
     hintStyle: const TextStyle(color: Colors.grey),
@@ -135,7 +137,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                         child: DropdownButton<String>(
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white),
-                          value: '+91',
+                          value: selectedCountryCode.value,
                           items: const [
                             DropdownMenuItem(value: '+91', child: Text('IN +91')),
                             DropdownMenuItem(value: '+1', child: Text('US +1')),
@@ -204,7 +206,7 @@ class _ContactPopupState extends State<ContactPopup> with MyColors {
                     contactFirstName: _firstNameController.text.trim(),
                     contactSecondName: _secoundNameController.text.trim(),
                     contactBusinessName: _businessNameController.text.trim(),
-                    contactNumber: _phoneNumberController.text.trim(),
+                    contactNumber: '$selectedCountryCode${_phoneNumberController.text.trim()}',
                   ),
                   context,
                 );

@@ -95,6 +95,7 @@ class ChatsDetailsContainer extends StatefulWidget with MyColors {
 
 class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
   final ChatBodyController chatBodyController = Get.put(ChatBodyController());
+  final ContactController contactController = Get.put(ContactController());
   final FirstController firstController = Get.put(FirstController());
 
   late final String? userID;
@@ -114,6 +115,7 @@ class _ChatsDetailsContainerState extends State<ChatsDetailsContainer> {
     return InkWell(
       onTap: () async {
         String? currentUserId = await chatBodyController.getUserPhoneNumber();
+
         Get.to(
           () => ChatsScreen(
             contactDetailData: widget.contactData,

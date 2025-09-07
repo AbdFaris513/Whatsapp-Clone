@@ -82,7 +82,7 @@ class ContactController extends GetxController {
 
   Future<void> addContact(ContactData newContact, BuildContext context) async {
     try {
-      final contactPhone = '+91${newContact.contactNumber}';
+      final contactPhone = newContact.contactNumber;
       bool itsHaveAccount = await doesUserExist(contactPhone);
 
       if (itsHaveAccount) {
@@ -175,7 +175,6 @@ class ContactController extends GetxController {
             ),
           );
         }
-        debugPrint('Con >> ');
         contactData.refresh();
       } else {
         debugPrint('User not found!');
@@ -266,7 +265,7 @@ class ContactController extends GetxController {
     debugPrint('Updated messaged contacts: ${messagedContacts.length}');
   }
 
-  // Helper to create ContactData from chat
+  // Update the _createContactFromChat method to show phone number if contact is not saved
   Future<ContactData> _createContactFromChat(
     Map<String, dynamic> chatData,
     Map<String, dynamic> userData,
@@ -293,21 +292,36 @@ class ContactController extends GetxController {
       }
     }
 
-    // Get existing contact if available
-    ContactData? existingContact;
-    try {
-      existingContact = contactData.firstWhere(
+    // Check if contact exists in user's saved contacts
+    bool isContactSaved = contactData.any((contact) => contact.contactNumber == otherParticipantId);
+
+    // Determine the display name - use phone number if contact is not saved
+    String displayName;
+
+    if (isContactSaved) {
+      // Use the saved contact name
+      ContactData savedContact = contactData.firstWhere(
         (contact) => contact.contactNumber == otherParticipantId,
       );
-    } catch (e) {
-      // Contact not found, that's okay
+      displayName = savedContact.contactFirstName;
+    } else {
+      // Use the phone number if contact is not saved
+      displayName = otherParticipantId;
     }
 
     return ContactData(
       id: otherParticipantId,
-      contactFirstName: userData['name']?.toString() ?? 'Unknown',
-      contactSecondName: existingContact?.contactSecondName,
-      contactBusinessName: existingContact?.contactBusinessName,
+      contactFirstName: displayName, // Use the determined display name
+      contactSecondName: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .contactSecondName
+          : null,
+      contactBusinessName: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .contactBusinessName
+          : null,
       contactNumber: otherParticipantId,
       contactStatus: userData['about']?.toString(),
       contactImage: userData['profilePicture']?.toString(),
@@ -316,15 +330,33 @@ class ContactController extends GetxController {
       contactLastMsg: lastMessage,
       contactLastMsgType: lastMessageType,
       unreadMessages: unreadMessages,
-      isContactPinned: existingContact?.isContactPinned ?? false,
-      isContactMuted: existingContact?.isContactMuted ?? false,
-      isContactBlocked: existingContact?.isContactBlocked ?? false,
-      isContactArchived: existingContact?.isContactArchived ?? false,
+      isContactPinned: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .isContactPinned
+          : false,
+      isContactMuted: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .isContactMuted
+          : false,
+      isContactBlocked: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .isContactBlocked
+          : false,
+      isContactArchived: isContactSaved
+          ? contactData
+                .firstWhere((contact) => contact.contactNumber == otherParticipantId)
+                .isContactArchived
+          : false,
       isOnline: userData['isOnline'] is bool ? userData['isOnline'] as bool : false,
       about: userData['about']?.toString(),
       lastMessageId: chatId,
       lastInteraction: lastMessageTime,
-      labels: existingContact?.labels,
+      labels: isContactSaved
+          ? contactData.firstWhere((contact) => contact.contactNumber == otherParticipantId).labels
+          : null,
     );
   }
 
@@ -343,6 +375,7 @@ class ContactController extends GetxController {
   }
 
   // Optional: Stream version for real-time updates
+  // Update the stream version to show phone number if contact is not saved
   Stream<List<ContactData>> getMessagedContactsStream() {
     return FirebaseFirestore.instance
         .collection('chats')
@@ -364,6 +397,22 @@ class ContactController extends GetxController {
               orElse: () => null,
             );
 
+            // Check if contact exists in saved contacts
+            bool isContactSaved = contactData.any(
+              (contact) => contact.contactNumber == otherParticipantId,
+            );
+
+            String displayName;
+
+            if (isContactSaved) {
+              ContactData savedContact = contactData.firstWhere(
+                (contact) => contact.contactNumber == otherParticipantId,
+              );
+              displayName = savedContact.contactFirstName;
+            } else {
+              displayName = otherParticipantId;
+            }
+
             final userDoc = await FirebaseFirestore.instance
                 .collection('users')
                 .doc(otherParticipantId)
@@ -371,21 +420,12 @@ class ContactController extends GetxController {
 
             if (userDoc.exists) {
               final userData = userDoc.data() as Map<String, dynamic>;
-              final existingContact = contactData.firstWhere(
-                (contact) => contact.contactNumber == otherParticipantId,
-                orElse: () => ContactData(
-                  id: otherParticipantId,
-                  contactFirstName: 'Unknown',
-                  contactNumber: otherParticipantId,
-                ),
-              );
-
               final lastMessageTime = (chatData['lastMessageTime'] as Timestamp?)?.toDate();
 
               contacts.add(
                 ContactData(
                   id: otherParticipantId,
-                  contactFirstName: userData['name'] ?? existingContact.contactFirstName,
+                  contactFirstName: displayName,
                   contactNumber: otherParticipantId,
                   contactStatus: userData['about'],
                   contactImage: userData['profilePicture'],
@@ -423,5 +463,179 @@ class ContactController extends GetxController {
   // Call this function when you want to refresh messaged contacts
   Future<void> refreshMessagedContacts() async {
     getMessagedContactsStream();
+  }
+
+  // Add these functions to your ContactController
+
+  /// Mark messages as seen when user opens a chat
+  Future<void> markMessagesAsSeen(String chatId, String contactPhoneNumber) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) return;
+
+      // Get the chat document
+      final chatDoc = await FirebaseFirestore.instance.collection('chats').doc(chatId).get();
+
+      if (!chatDoc.exists) return;
+
+      final chatData = chatDoc.data() as Map<String, dynamic>;
+
+      // Update unread count for current user to 0
+      await FirebaseFirestore.instance.collection('chats').doc(chatId).update({
+        'unreadCounts.$currentUserId': 0,
+      });
+
+      // Also update the messagedContacts list locally
+      final index = messagedContacts.indexWhere(
+        (contact) => contact.contactNumber == contactPhoneNumber,
+      );
+
+      if (index != -1) {
+        messagedContacts[index] = messagedContacts[index].copyWith(unreadMessages: 0);
+        messagedContacts.refresh();
+      }
+
+      debugPrint('Messages marked as seen for chat: $chatId');
+    } catch (e) {
+      debugPrint('Error marking messages as seen: $e');
+    }
+  }
+
+  /// Update user's last seen timestamp
+  Future<void> updateLastSeen() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) return;
+
+      await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
+        'lastSeen': FieldValue.serverTimestamp(),
+        'isOnline': true, // Set online status when active
+      });
+
+      debugPrint('Last seen updated for user: $currentUserId');
+    } catch (e) {
+      debugPrint('Error updating last seen: $e');
+    }
+  }
+
+  /// Handle chat click - combines multiple operations
+  Future<void> onChatClick({required String chatId, required String contactPhoneNumber}) async {
+    try {
+      // 1. Mark messages as seen
+      await markMessagesAsSeen(chatId, contactPhoneNumber);
+
+      // 2. Update user's last seen
+      await updateLastSeen();
+
+      // 3. Refresh the messaged contacts list
+      await refreshMessagedContacts();
+
+      debugPrint('Chat click handled successfully for: $contactPhoneNumber');
+    } catch (e) {
+      debugPrint('Error handling chat click: $e');
+    }
+  }
+
+  /// Update online status when user becomes active
+  Future<void> setUserOnline(bool isOnline) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) return;
+
+      await FirebaseFirestore.instance.collection('users').doc(currentUserId).update({
+        'isOnline': isOnline,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint('User online status updated to: $isOnline');
+    } catch (e) {
+      debugPrint('Error updating online status: $e');
+    }
+  }
+
+  /// Update message status to "seen" for specific messages
+  Future<void> updateMessageStatusToSeen(String chatId, List<String> messageIds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) return;
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      for (final messageId in messageIds) {
+        final messageRef = FirebaseFirestore.instance
+            .collection('chats')
+            .doc(chatId)
+            .collection('messages')
+            .doc(messageId);
+
+        batch.update(messageRef, {
+          'status': 'seen',
+          'seenAt': FieldValue.serverTimestamp(),
+          'seenBy': FieldValue.arrayUnion([currentUserId]),
+        });
+      }
+
+      await batch.commit();
+      debugPrint('Message status updated to seen for $messageIds');
+    } catch (e) {
+      debugPrint('Error updating message status: $e');
+    }
+  }
+
+  /// Get unread message IDs for a specific chat
+  Future<List<String>> getUnreadMessageIds(String chatId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? currentUserId = prefs.getString('loggedInPhone');
+
+      if (currentUserId == null) return [];
+
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .where('status', isEqualTo: 'delivered')
+          .where('senderId', isNotEqualTo: currentUserId)
+          .get();
+
+      return querySnapshot.docs.map((doc) => doc.id).toList();
+    } catch (e) {
+      debugPrint('Error getting unread message IDs: $e');
+      return [];
+    }
+  }
+
+  /// Comprehensive chat click handler with message status updates
+  Future<void> handleChatClick({required String chatId, required String contactPhoneNumber}) async {
+    try {
+      // 1. Get all unread message IDs
+      final unreadMessageIds = await getUnreadMessageIds(chatId);
+
+      // 2. Update message status to "seen"
+      if (unreadMessageIds.isNotEmpty) {
+        await updateMessageStatusToSeen(chatId, unreadMessageIds);
+      }
+
+      // 3. Mark messages as seen in chat document
+      await markMessagesAsSeen(chatId, contactPhoneNumber);
+
+      // 4. Update user's online status and last seen
+      await setUserOnline(true);
+
+      // 5. Refresh the contacts list
+      await refreshMessagedContacts();
+
+      debugPrint('Chat fully processed for: $contactPhoneNumber');
+    } catch (e) {
+      debugPrint('Error in comprehensive chat click handling: $e');
+    }
   }
 }

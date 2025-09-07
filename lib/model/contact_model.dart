@@ -3,7 +3,7 @@ class ContactData {
   final String contactFirstName;
   final String? contactSecondName;
   final String? contactBusinessName;
-  final String contactNumber;
+  String contactNumber;
   final String? contactStatus; // "Busy", "Available", etc.
   final String? contactImage;
   final DateTime? contactLastSeen;
@@ -44,4 +44,53 @@ class ContactData {
     this.lastInteraction,
     this.labels,
   });
+
+  // Add this to your ContactModel class
+  ContactData copyWith({
+    String? id,
+    String? contactFirstName,
+    String? contactSecondName,
+    String? contactBusinessName,
+    String? contactNumber,
+    String? contactStatus,
+    String? contactImage,
+    DateTime? contactLastSeen,
+    DateTime? contactLastMsgTime,
+    String? contactLastMsg,
+    String? contactLastMsgType,
+    int? unreadMessages,
+    bool? isContactPinned,
+    bool? isContactMuted,
+    bool? isContactBlocked,
+    bool? isContactArchived,
+    bool? isOnline,
+    String? about,
+    String? lastMessageId,
+    DateTime? lastInteraction,
+    List<String>? labels,
+  }) {
+    return ContactData(
+      id: id ?? this.id,
+      contactFirstName: contactFirstName ?? this.contactFirstName,
+      contactSecondName: contactSecondName ?? this.contactSecondName,
+      contactBusinessName: contactBusinessName ?? this.contactBusinessName,
+      contactNumber: contactNumber ?? this.contactNumber,
+      contactStatus: contactStatus ?? this.contactStatus,
+      contactImage: contactImage ?? this.contactImage,
+      contactLastSeen: contactLastSeen ?? this.contactLastSeen,
+      contactLastMsgTime: contactLastMsgTime ?? this.contactLastMsgTime,
+      contactLastMsg: contactLastMsg ?? this.contactLastMsg,
+      contactLastMsgType: contactLastMsgType ?? this.contactLastMsgType,
+      unreadMessages: unreadMessages ?? this.unreadMessages,
+      isContactPinned: isContactPinned ?? this.isContactPinned,
+      isContactMuted: isContactMuted ?? this.isContactMuted,
+      isContactBlocked: isContactBlocked ?? this.isContactBlocked,
+      isContactArchived: isContactArchived ?? this.isContactArchived,
+      isOnline: isOnline ?? this.isOnline,
+      about: about ?? this.about,
+      lastMessageId: lastMessageId ?? this.lastMessageId,
+      lastInteraction: lastInteraction ?? this.lastInteraction,
+      labels: labels ?? this.labels,
+    );
+  }
 }
