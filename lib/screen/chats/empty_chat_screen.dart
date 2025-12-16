@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/controller/chat_body_controller.dart';
 import 'package:whatsapp_clone/controller/chat_screen_controller.dart';
 import 'package:whatsapp_clone/controller/contact_controller.dart';
-import 'package:whatsapp_clone/screen/chats/first_controller.dart';
+import 'package:whatsapp_clone/controller/first_controller.dart';
 import 'package:whatsapp_clone/screen/contact/add_contact.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 

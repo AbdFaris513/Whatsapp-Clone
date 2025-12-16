@@ -22,9 +22,6 @@ class FirstController extends GetxController {
 
     if (userExists) {
       contactController.getMessagedContactsStream();
-    } else {
-      String phoneNumber = prefs.getString('loggedInPhone')?.toString() ?? '';
-      await contactController.getUserContactList(phoneNumber: phoneNumber);
     }
 
     if (mounted) {

@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:whatsapp_clone/utils/my_colors.dart';
 import 'package:whatsapp_clone/widget/from_facebook.dart';
 
-import 'chats/first_controller.dart';
+import '../controller/first_controller.dart';
 
 class SplashScreen extends StatefulWidget with MyColors {
   const SplashScreen({super.key});
